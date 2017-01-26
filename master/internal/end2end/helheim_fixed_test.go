@@ -6,7 +6,7 @@
 package end2end_test
 
 import (
-	"github.com/apoydence/loggrebutterfly/internal/pb/intra"
+	"github.com/apoydence/loggrebutterfly/pb/intra"
 	"github.com/apoydence/talaria/pb"
 	"golang.org/x/net/context"
 )
@@ -79,7 +79,7 @@ func (m *mockSchedulerServer) ListClusterInfo(arg0 context.Context, arg1 *pb.Lis
 	return <-m.ListClusterInfoOutput.Ret0, <-m.ListClusterInfoOutput.Ret1
 }
 
-type mockRouterServer struct {
+type mockDataNodeServer struct {
 	ReadMetricsCalled chan bool
 	ReadMetricsInput  struct {
 		Arg0 chan context.Context
@@ -91,8 +91,8 @@ type mockRouterServer struct {
 	}
 }
 
-func newMockRouterServer() *mockRouterServer {
-	m := &mockRouterServer{}
+func newMockDataNodeServer() *mockDataNodeServer {
+	m := &mockDataNodeServer{}
 	m.ReadMetricsCalled = make(chan bool, 100)
 	m.ReadMetricsInput.Arg0 = make(chan context.Context, 100)
 	m.ReadMetricsInput.Arg1 = make(chan *intra.ReadMetricsInfo, 100)
@@ -100,7 +100,7 @@ func newMockRouterServer() *mockRouterServer {
 	m.ReadMetricsOutput.Ret1 = make(chan error, 100)
 	return m
 }
-func (m *mockRouterServer) ReadMetrics(arg0 context.Context, arg1 *intra.ReadMetricsInfo) (*intra.ReadMetricsResponse, error) {
+func (m *mockDataNodeServer) ReadMetrics(arg0 context.Context, arg1 *intra.ReadMetricsInfo) (*intra.ReadMetricsResponse, error) {
 	m.ReadMetricsCalled <- true
 	m.ReadMetricsInput.Arg0 <- arg0
 	m.ReadMetricsInput.Arg1 <- arg1

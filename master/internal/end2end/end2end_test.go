@@ -18,7 +18,7 @@ import (
 
 	"github.com/apoydence/eachers/testhelpers"
 	"github.com/apoydence/loggrebutterfly/internal/end2end"
-	"github.com/apoydence/loggrebutterfly/internal/pb/intra"
+	"github.com/apoydence/loggrebutterfly/pb/intra"
 	"github.com/apoydence/onpar"
 	"github.com/apoydence/petasos/router"
 	"github.com/apoydence/talaria/pb"
@@ -32,7 +32,7 @@ var (
 	masterPort    int
 	schedAddr     string
 	mockScheduler *mockSchedulerServer
-	mockRouters   []*mockRouterServer
+	mockDataNodes []*mockDataNodeServer
 )
 
 func TestMain(m *testing.M) {
@@ -99,7 +99,7 @@ func TestMaster(t *testing.T) {
 	testhelpers.AlwaysReturn(mockScheduler.ReadOnlyOutput.Ret0, new(pb.ReadOnlyResponse))
 	close(mockScheduler.ReadOnlyOutput.Ret1)
 
-	for _, m := range mockRouters {
+	for _, m := range mockDataNodes {
 		testhelpers.AlwaysReturn(m.ReadMetricsOutput.Ret0, new(intra.ReadMetricsResponse))
 		close(m.ReadMetricsOutput.Ret1)
 	}
@@ -141,9 +141,9 @@ func setup() []*os.Process {
 
 	var routers []string
 	for i := 0; i < 3; i++ {
-		addr, m := startMockRouter()
+		addr, m := startMockDataNode()
 		routers = append(routers, addr)
-		mockRouters = append(mockRouters, m)
+		mockDataNodes = append(mockDataNodes, m)
 	}
 
 	masterPort = end2end.AvailablePort()
@@ -167,7 +167,7 @@ func startMaster(port int, schedAddr string, routers []string) *os.Process {
 	command.Env = []string{
 		fmt.Sprintf("ADDR=127.0.0.1:%d", port),
 		fmt.Sprintf("SCHEDULER_ADDR=%s", schedAddr),
-		fmt.Sprintf("ROUTER_ADDRS=%s", buildRouterAddrs(routers)),
+		fmt.Sprintf("ROUTER_ADDRS=%s", buildDataNodeAddrs(routers)),
 		"BALANCER_INTERVAL=1ms",
 		"FILLER_INTERVAL=1ms",
 	}
@@ -202,14 +202,14 @@ func startMockScheduler() (string, *mockSchedulerServer) {
 	return lis.Addr().String(), mockSchedulerServer
 }
 
-func startMockRouter() (string, *mockRouterServer) {
+func startMockDataNode() (string, *mockDataNodeServer) {
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		panic(err)
 	}
-	mockRouterServer := newMockRouterServer()
+	mockDataNodeServer := newMockDataNodeServer()
 	s := grpc.NewServer()
-	intra.RegisterRouterServer(s, mockRouterServer)
+	intra.RegisterDataNodeServer(s, mockDataNodeServer)
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -217,10 +217,10 @@ func startMockRouter() (string, *mockRouterServer) {
 		}
 	}()
 
-	return lis.Addr().String(), mockRouterServer
+	return lis.Addr().String(), mockDataNodeServer
 }
 
-func buildRouterAddrs(addrs []string) string {
+func buildDataNodeAddrs(addrs []string) string {
 	return strings.Join(addrs, ",")
 }
 

@@ -29,5 +29,6 @@ func main() {
 		maintainer.WithFillerInterval(conf.FillerInterval),
 	)
 
+	log.Printf("Starting pprof on %s", conf.PprofAddr)
 	log.Println(http.ListenAndServe(conf.PprofAddr, nil))
 }

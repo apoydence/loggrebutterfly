@@ -7,18 +7,18 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/apoydence/loggrebutterfly/internal/pb/intra"
+	"github.com/apoydence/loggrebutterfly/pb/intra"
 	"github.com/apoydence/petasos/router"
 )
 
 type NetworkReader struct {
 	mu      sync.Mutex
-	clients map[string]intra.RouterClient
+	clients map[string]intra.DataNodeClient
 }
 
 func New() *NetworkReader {
 	return &NetworkReader{
-		clients: make(map[string]intra.RouterClient),
+		clients: make(map[string]intra.DataNodeClient),
 	}
 }
 
@@ -40,7 +40,7 @@ func (r *NetworkReader) ReadMetrics(addr, file string) (metric router.Metric, er
 	}, nil
 }
 
-func (r *NetworkReader) fetchClient(addr string) (intra.RouterClient, error) {
+func (r *NetworkReader) fetchClient(addr string) (intra.DataNodeClient, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -53,7 +53,7 @@ func (r *NetworkReader) fetchClient(addr string) (intra.RouterClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	client = intra.NewRouterClient(conn)
+	client = intra.NewDataNodeClient(conn)
 	r.clients[addr] = client
 
 	return client, nil

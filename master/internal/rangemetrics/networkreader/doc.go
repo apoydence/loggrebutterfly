@@ -1,8 +1,9 @@
 package networkreader
 
-import "github.com/apoydence/loggrebutterfly/internal/pb/intra"
+import "github.com/apoydence/loggrebutterfly/pb/intra"
 
 //go:generate hel
-type RouterServer interface {
-	intra.RouterServer
+
+type DataNodeServer interface {
+	intra.DataNodeServer
 }

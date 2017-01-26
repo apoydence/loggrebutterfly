@@ -11,8 +11,8 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/apoydence/eachers/testhelpers"
-	"github.com/apoydence/loggrebutterfly/internal/pb/intra"
 	"github.com/apoydence/loggrebutterfly/master/internal/rangemetrics/networkreader"
+	"github.com/apoydence/loggrebutterfly/pb/intra"
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"
@@ -32,8 +32,8 @@ type TN struct {
 
 	reader *networkreader.NetworkReader
 
-	routerAddrs       []string
-	mockRouterServers []*mockRouterServer
+	routerAddrs         []string
+	mockDataNodeServers []*mockDataNodeServer
 }
 
 func TestNetworkReader(t *testing.T) {
@@ -43,25 +43,25 @@ func TestNetworkReader(t *testing.T) {
 
 	o.BeforeEach(func(t *testing.T) TN {
 		var routerAddrs []string
-		var mockRouterServers []*mockRouterServer
+		var mockDataNodeServers []*mockDataNodeServer
 		for i := 0; i < 3; i++ {
-			addr, m := startMockRouter()
+			addr, m := startMockDataNode()
 			routerAddrs = append(routerAddrs, addr)
-			mockRouterServers = append(mockRouterServers, m)
+			mockDataNodeServers = append(mockDataNodeServers, m)
 		}
 
 		return TN{
 			T:      t,
 			reader: networkreader.New(),
 
-			routerAddrs:       routerAddrs,
-			mockRouterServers: mockRouterServers,
+			routerAddrs:         routerAddrs,
+			mockDataNodeServers: mockDataNodeServers,
 		}
 	})
 
 	o.Group("when all the routers do not return an error", func() {
 		o.BeforeEach(func(t TN) TN {
-			for _, m := range t.mockRouterServers {
+			for _, m := range t.mockDataNodeServers {
 				testhelpers.AlwaysReturn(m.ReadMetricsOutput.Ret0, &intra.ReadMetricsResponse{
 					WriteCount: 5,
 					ErrCount:   3,
@@ -80,19 +80,19 @@ func TestNetworkReader(t *testing.T) {
 	})
 }
 
-func startMockRouter() (string, *mockRouterServer) {
+func startMockDataNode() (string, *mockDataNodeServer) {
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		panic(err)
 	}
-	mockRouterServer := newMockRouterServer()
+	mockDataNodeServer := newMockDataNodeServer()
 	s := grpc.NewServer()
-	intra.RegisterRouterServer(s, mockRouterServer)
+	intra.RegisterDataNodeServer(s, mockDataNodeServer)
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			panic(err)
 		}
 	}()
 
-	return lis.Addr().String(), mockRouterServer
+	return lis.Addr().String(), mockDataNodeServer
 }

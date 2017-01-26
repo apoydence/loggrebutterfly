@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package intra;
 
-service Router {
+service DataNode {
   rpc ReadMetrics(ReadMetricsInfo) returns (ReadMetricsResponse) {}
 }
 
