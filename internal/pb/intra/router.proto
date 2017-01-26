@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package intra;
+
+service Router {
+  rpc ReadMetrics(ReadMetricsInfo) returns (ReadMetricsResponse) {}
+}
+
+message ReadMetricsInfo {
+  string file = 1;
+}
+
+message ReadMetricsResponse {
+  uint64 writeCount = 1;
+  uint64 errCount = 2;
+}

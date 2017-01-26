@@ -35,6 +35,7 @@ func (f *FileSystem) List() (files []string, err error) {
 	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
 	resp, err := f.schedClient.ListClusterInfo(ctx, new(pb.ListInfo))
 	if err != nil {
+		log.Printf("Failed to list cluster info: %s", err)
 		return nil, err
 	}
 
