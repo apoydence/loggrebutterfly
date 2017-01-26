@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	v2 "github.com/apoydence/loggrebutterfly/internal/pb/loggregator/v2"
+	v2 "github.com/apoydence/loggrebutterfly/pb/loggregator/v2"
 	"github.com/golang/protobuf/proto"
 
 	"github.com/apoydence/loggrebutterfly/datanode/internal/hasher"
