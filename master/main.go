@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/apoydence/loggrebutterfly/master/internal/config"
 	"github.com/apoydence/loggrebutterfly/master/internal/filesystem"
@@ -28,6 +29,5 @@ func main() {
 		maintainer.WithFillerInterval(conf.FillerInterval),
 	)
 
-	var c chan struct{}
-	<-c
+	log.Println(http.ListenAndServe(conf.PprofAddr, nil))
 }
