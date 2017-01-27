@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package pb;
+
+service Master {
+  rpc Routes(RoutesInfo) returns (RoutesResponse) {}
+}
+
+message RoutesInfo {
+}
+
+message RoutesResponse {
+  repeated RouteInfo routes = 1;
+}
+
+message RouteInfo {
+  string name = 1;
+  string leader = 2;
+}

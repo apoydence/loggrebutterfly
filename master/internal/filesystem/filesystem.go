@@ -32,6 +32,20 @@ func (f *FileSystem) ReadOnly(file string) (err error) {
 }
 
 func (f *FileSystem) List() (files []string, err error) {
+	m, err := f.Routes()
+	if err != nil {
+		return nil, err
+	}
+
+	for name, _ := range m {
+		files = append(files, name)
+	}
+
+	return files, nil
+}
+
+func (f *FileSystem) Routes() (routes map[string]string, err error) {
+	routes = make(map[string]string)
 	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
 	resp, err := f.schedClient.ListClusterInfo(ctx, new(pb.ListInfo))
 	if err != nil {
@@ -40,10 +54,10 @@ func (f *FileSystem) List() (files []string, err error) {
 	}
 
 	for _, info := range resp.Info {
-		files = append(files, info.Name)
+		routes[info.Name] = info.Leader
 	}
 
-	return files, nil
+	return routes, nil
 }
 
 func setupSchedClient(addr string) (client pb.SchedulerClient) {

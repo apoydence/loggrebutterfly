@@ -118,6 +118,36 @@ func TestFileSystemList(t *testing.T) {
 	})
 }
 
+func TestFileSystemRoutes(t *testing.T) {
+	t.Parallel()
+	o := onpar.New()
+	defer o.Run(t)
+
+	setup(o)
+
+	o.Group("when scheduler does not return an error", func() {
+		o.BeforeEach(func(t TF) TF {
+			testhelpers.AlwaysReturn(t.mockSchedulerServer.ListClusterInfoOutput.Ret0, &pb.ListResponse{
+				Info: []*pb.ClusterInfo{
+					{Name: "a", Leader: "l"},
+					{Name: "b", Leader: "l"},
+					{Name: "c", Leader: "l"},
+				},
+			})
+			close(t.mockSchedulerServer.ListClusterInfoOutput.Ret1)
+			return t
+		})
+
+		o.Spec("it lists the buffers from the scheduler", func(t TF) {
+			routes, err := t.fs.Routes()
+			Expect(t, err == nil).To(BeTrue())
+			Expect(t, routes).To(Chain(HaveKey("a"), Equal("l")))
+			Expect(t, routes).To(Chain(HaveKey("b"), Equal("l")))
+			Expect(t, routes).To(Chain(HaveKey("c"), Equal("l")))
+		})
+	})
+}
+
 func setup(o *onpar.Onpar) {
 	o.BeforeEach(func(t *testing.T) TF {
 		addr, mockSchedulerServer := startMockSched()
