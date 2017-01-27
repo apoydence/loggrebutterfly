@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package pb;
+
+service DataNode {
+  rpc Write(WriteInfo) returns (WriteResponse) {}
+}
+
+message WriteInfo {
+  bytes Payload = 1;
+}
+
+message WriteResponse {
+}
