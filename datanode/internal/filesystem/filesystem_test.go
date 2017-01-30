@@ -65,31 +65,24 @@ func TestFileSystemWriter(t *testing.T) {
 
 	setup(o)
 
-	o.Group("when the node does not return an error", func() {
-		o.BeforeEach(func(t TFS) TFS {
-			close(t.mockNodeServer.WriteOutput.Ret0)
-
-			return t
-		})
-
-		o.Spec("it returns the list from the node", func(t TFS) {
-			go func() {
-				writer, err := t.fs.Writer("some-name")
-				Expect(t, err == nil).To(BeTrue())
-
-				err = writer.Write([]byte("some-data"))
-				Expect(t, err == nil).To(BeTrue())
-			}()
-
-			var writer pb.Node_WriteServer
-			Expect(t, t.mockNodeServer.WriteInput.Arg0).To(ViaPolling(
-				Chain(Receive(), Fetch(&writer)),
-			))
-
-			packet, err := writer.Recv()
+	o.Spec("it returns the list from the node", func(t TFS) {
+		defer close(t.mockNodeServer.WriteOutput.Ret0)
+		go func() {
+			writer, err := t.fs.Writer("some-name")
 			Expect(t, err == nil).To(BeTrue())
-			Expect(t, packet.Message).To(Equal([]byte("some-data")))
-		})
+
+			err = writer.Write([]byte("some-data"))
+			Expect(t, err == nil).To(BeTrue())
+		}()
+
+		var writer pb.Node_WriteServer
+		Expect(t, t.mockNodeServer.WriteInput.Arg0).To(ViaPolling(
+			Chain(Receive(), Fetch(&writer)),
+		))
+
+		packet, err := writer.Recv()
+		Expect(t, err == nil).To(BeTrue())
+		Expect(t, packet.Message).To(Equal([]byte("some-data")))
 	})
 }
 
