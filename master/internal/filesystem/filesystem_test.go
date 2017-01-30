@@ -110,10 +110,11 @@ func TestFileSystemList(t *testing.T) {
 			return t
 		})
 
-		o.Spec("it lists the buffers from the scheduler", func(t TF) {
+		o.Spec("it lists the buffers from the scheduler and converts to data node addrs", func(t TF) {
 			files, err := t.fs.List()
 			Expect(t, err == nil).To(BeTrue())
-			Expect(t, files).To(Contain("a", "b", "c"))
+
+			Expect(t, files).To(Contain("A", "B", "C"))
 		})
 	})
 }
@@ -151,11 +152,16 @@ func TestFileSystemRoutes(t *testing.T) {
 func setup(o *onpar.Onpar) {
 	o.BeforeEach(func(t *testing.T) TF {
 		addr, mockSchedulerServer := startMockSched()
+		m := map[string]string{
+			"a": "A",
+			"b": "B",
+			"c": "C",
+		}
 
 		return TF{
 			T:                   t,
 			mockSchedulerServer: mockSchedulerServer,
-			fs:                  filesystem.New(addr),
+			fs:                  filesystem.New(addr, m),
 		}
 	})
 }

@@ -1,6 +1,7 @@
 package end2end_test
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -15,13 +16,15 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
 
 	"github.com/apoydence/eachers/testhelpers"
 	"github.com/apoydence/loggrebutterfly/internal/end2end"
+	"github.com/apoydence/loggrebutterfly/pb"
 	"github.com/apoydence/loggrebutterfly/pb/intra"
 	"github.com/apoydence/onpar"
 	"github.com/apoydence/petasos/router"
-	"github.com/apoydence/talaria/pb"
+	talariapb "github.com/apoydence/talaria/pb"
 	"github.com/onsi/gomega/gexec"
 
 	. "github.com/apoydence/onpar/expect"
@@ -40,6 +43,7 @@ func TestMain(m *testing.M) {
 
 	if !testing.Verbose() {
 		log.SetOutput(ioutil.Discard)
+		grpclog.SetLogger(log.New(ioutil.Discard, "", 0))
 	}
 
 	ps := setup()
@@ -59,6 +63,7 @@ func TestMain(m *testing.M) {
 
 type TM struct {
 	*testing.T
+	masterClient pb.MasterClient
 }
 
 func TestMaster(t *testing.T) {
@@ -81,22 +86,24 @@ func TestMaster(t *testing.T) {
 	go func() {
 		for {
 			<-mockScheduler.ListClusterInfoCalled
-			var info []*pb.ClusterInfo
+			<-mockScheduler.ListClusterInfoInput.Arg0
+			<-mockScheduler.ListClusterInfoInput.Arg1
+			var info []*talariapb.ClusterInfo
 			mu.Lock()
 			for _, name := range createResults {
-				info = append(info, &pb.ClusterInfo{Name: name})
+				info = append(info, &talariapb.ClusterInfo{Name: name, Leader: "some-leader"})
 			}
 			mu.Unlock()
 
-			mockScheduler.ListClusterInfoOutput.Ret0 <- &pb.ListResponse{Info: info}
+			mockScheduler.ListClusterInfoOutput.Ret0 <- &talariapb.ListResponse{Info: info}
 			mockScheduler.ListClusterInfoOutput.Ret1 <- nil
 		}
 	}()
 
-	testhelpers.AlwaysReturn(mockScheduler.CreateOutput.Ret0, new(pb.CreateResponse))
+	testhelpers.AlwaysReturn(mockScheduler.CreateOutput.Ret0, new(talariapb.CreateResponse))
 	close(mockScheduler.CreateOutput.Ret1)
 
-	testhelpers.AlwaysReturn(mockScheduler.ReadOnlyOutput.Ret0, new(pb.ReadOnlyResponse))
+	testhelpers.AlwaysReturn(mockScheduler.ReadOnlyOutput.Ret0, new(talariapb.ReadOnlyResponse))
 	close(mockScheduler.ReadOnlyOutput.Ret1)
 
 	for _, m := range mockDataNodes {
@@ -106,12 +113,12 @@ func TestMaster(t *testing.T) {
 
 	o.BeforeEach(func(t *testing.T) TM {
 		return TM{
-			T: t,
+			T:            t,
+			masterClient: fetchMasterClient(masterPort),
 		}
 	})
 
 	o.Spec("it creates 4 buffers", func(t TM) {
-
 		f := func() bool {
 			return len(mockScheduler.CreateCalled) >= 4
 		}
@@ -123,7 +130,7 @@ func TestMaster(t *testing.T) {
 	})
 
 	o.Spec("it fills a gap", func(t TM) {
-		mockScheduler.CreateInput.Arg1 <- &pb.CreateInfo{Name: buildRangeName(0, 9223372036854775807, 100)}
+		mockScheduler.CreateInput.Arg1 <- &talariapb.CreateInfo{Name: buildRangeName(0, 9223372036854775807, 100)}
 
 		f := func() bool {
 			return len(mockScheduler.CreateCalled) >= 5
@@ -133,6 +140,21 @@ func TestMaster(t *testing.T) {
 			Matcher:  BeTrue(),
 			Duration: 10 * time.Second,
 		})
+	})
+
+	o.Spec("it reports the leaders", func(t TM) {
+		var resp *pb.RoutesResponse
+		f := func() bool {
+			var err error
+			ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(3*time.Second))
+			resp, err = t.masterClient.Routes(ctx, new(pb.RoutesInfo))
+			if err != nil {
+				return false
+			}
+			return len(resp.Routes) >= 2
+		}
+		Expect(t, f).To(ViaPolling(BeTrue()))
+		Expect(t, resp.Routes[0].Leader).To(Equal("some-leader"))
 	})
 }
 
@@ -168,6 +190,7 @@ func startMaster(port int, schedAddr string, routers []string) *os.Process {
 		fmt.Sprintf("ADDR=127.0.0.1:%d", port),
 		fmt.Sprintf("SCHEDULER_ADDR=%s", schedAddr),
 		fmt.Sprintf("ROUTER_ADDRS=%s", buildDataNodeAddrs(routers)),
+		fmt.Sprintf("TALARIA_NODE_ADDRS=%s", buildDataNodeAddrs(routers)),
 		"BALANCER_INTERVAL=1ms",
 		"FILLER_INTERVAL=1ms",
 	}
@@ -184,6 +207,14 @@ func startMaster(port int, schedAddr string, routers []string) *os.Process {
 	return command.Process
 }
 
+func fetchMasterClient(port int) pb.MasterClient {
+	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", port), grpc.WithInsecure())
+	if err != nil {
+		return nil
+	}
+	return pb.NewMasterClient(conn)
+}
+
 func startMockScheduler() (string, *mockSchedulerServer) {
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -191,7 +222,7 @@ func startMockScheduler() (string, *mockSchedulerServer) {
 	}
 	mockSchedulerServer := newMockSchedulerServer()
 	s := grpc.NewServer()
-	pb.RegisterSchedulerServer(s, mockSchedulerServer)
+	talariapb.RegisterSchedulerServer(s, mockSchedulerServer)
 
 	go func() {
 		if err := s.Serve(lis); err != nil {

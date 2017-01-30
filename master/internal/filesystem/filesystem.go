@@ -10,12 +10,14 @@ import (
 )
 
 type FileSystem struct {
-	schedClient pb.SchedulerClient
+	schedClient       pb.SchedulerClient
+	nodeAddrConverter map[string]string
 }
 
-func New(addr string) *FileSystem {
+func New(addr string, nodeAddrConverter map[string]string) *FileSystem {
 	return &FileSystem{
-		schedClient: setupSchedClient(addr),
+		schedClient:       setupSchedClient(addr),
+		nodeAddrConverter: nodeAddrConverter,
 	}
 }
 
@@ -38,7 +40,12 @@ func (f *FileSystem) List() (files []string, err error) {
 	}
 
 	for name, _ := range m {
-		files = append(files, name)
+		addr, ok := f.nodeAddrConverter[name]
+		if !ok {
+			continue
+		}
+
+		files = append(files, addr)
 	}
 
 	return files, nil
@@ -54,7 +61,11 @@ func (f *FileSystem) Routes() (routes map[string]string, err error) {
 	}
 
 	for _, info := range resp.Info {
-		routes[info.Name] = info.Leader
+		addr, ok := f.nodeAddrConverter[info.Leader]
+		if !ok {
+			continue
+		}
+		routes[info.Name] = addr
 	}
 
 	return routes, nil

@@ -31,8 +31,7 @@ func (f *FileSystem) List() (file []string, err error) {
 }
 
 func (f *FileSystem) Writer(name string) (writer router.Writer, err error) {
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
-	sender, err := f.client.Write(ctx)
+	sender, err := f.client.Write(context.Background())
 	if err != nil {
 		return nil, err
 	}
