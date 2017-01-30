@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/apoydence/loggrebutterfly/pb"
+	"github.com/apoydence/petasos/reader"
 	"github.com/apoydence/petasos/router"
 	"google.golang.org/grpc"
 )
@@ -60,6 +61,21 @@ func (f *FileSystem) Writer(name string) (writer router.Writer, err error) {
 	}
 
 	return wrapper, nil
+}
+
+func (f *FileSystem) Reader(name string) (reader reader.Reader, err error) {
+	client, ok := f.fetchRoute(name)
+	if !ok {
+		return nil, fmt.Errorf("unknown file: %s", name)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	rx, err := client.Read(ctx, &pb.ReadInfo{Name: name})
+	if err != nil {
+		return nil, err
+	}
+
+	return &receiverWrapper{rx: rx, cancel: cancel}, nil
 }
 
 func (f *FileSystem) setupRoutes() error {
@@ -139,4 +155,22 @@ func (w *senderWrapper) Write(data []byte) error {
 	}
 
 	return nil
+}
+
+type receiverWrapper struct {
+	rx     pb.DataNode_ReadClient
+	cancel func()
+}
+
+func (w *receiverWrapper) Read() ([]byte, error) {
+	data, err := w.rx.Recv()
+	if err != nil {
+		return nil, err
+	}
+
+	return data.Payload, nil
+}
+
+func (w *receiverWrapper) Close() {
+	w.cancel()
 }

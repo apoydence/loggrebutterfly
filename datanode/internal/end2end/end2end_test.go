@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
 
 	"github.com/apoydence/eachers/testhelpers"
 	"github.com/apoydence/loggrebutterfly/internal/end2end"
@@ -41,6 +42,7 @@ func TestMain(m *testing.M) {
 
 	if !testing.Verbose() {
 		log.SetOutput(ioutil.Discard)
+		grpclog.SetLogger(log.New(ioutil.Discard, "", log.LstdFlags))
 	}
 
 	ps := setup()
@@ -70,14 +72,14 @@ func TestDataNode(t *testing.T) {
 	o := onpar.New()
 	defer o.Run(t)
 
-	o.BeforeEach(func(t *testing.T) TDN {
-		fileName := buildRangeName(0, 18446744073709551615, 0)
-		testhelpers.AlwaysReturn(mockNode.ListClustersOutput.Ret0, &talariapb.ListClustersResponse{
-			Names: []string{fileName},
-		})
-		close(mockNode.ListClustersOutput.Ret1)
-		close(mockNode.WriteOutput.Ret0)
+	fileName := buildRangeName(0, 18446744073709551615, 0)
+	testhelpers.AlwaysReturn(mockNode.ListClustersOutput.Ret0, &talariapb.ListClustersResponse{
+		Names: []string{fileName},
+	})
+	close(mockNode.ListClustersOutput.Ret1)
+	close(mockNode.WriteOutput.Ret0)
 
+	o.BeforeEach(func(t *testing.T) TDN {
 		return TDN{
 			T:           t,
 			client:      fetchClient(fmt.Sprintf("127.0.0.1:%d", dataNodePort)),
@@ -111,6 +113,30 @@ func TestDataNode(t *testing.T) {
 
 		Expect(t, f).To(ViaPolling(BeTrue()))
 		Expect(t, resp.WriteCount).To(Equal(uint64(1)))
+	})
+
+	o.Spec("it reads from the talaria node", func(t TDN) {
+		defer close(mockNode.ReadOutput.Ret0)
+
+		go func() {
+			var server talariapb.Node_ReadServer
+			Expect(t, mockNode.ReadInput.Arg1).To(ViaPolling(
+				Chain(Receive(), Fetch(&server)),
+			))
+
+			server.Send(&talariapb.ReadDataPacket{Message: []byte("some-data")})
+		}()
+
+		var rx pb.DataNode_ReadClient
+		f := func() bool {
+			var err error
+			rx, err = t.client.Read(context.Background(), &pb.ReadInfo{Name: t.fileName})
+			return err == nil
+		}
+		Expect(t, f).To(ViaPolling(BeTrue()))
+		rxData, err := rx.Recv()
+		Expect(t, err == nil).To(BeTrue())
+		Expect(t, rxData.Payload).To(Equal([]byte("some-data")))
 	})
 }
 

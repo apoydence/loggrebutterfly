@@ -23,7 +23,7 @@ func main() {
 	router := router.New(fs, hasher)
 
 	log.Printf("Starting server on %s...", conf.Addr)
-	addr, err := server.Start(conf.Addr, router)
+	addr, err := server.Start(conf.Addr, router, fs)
 	if err != nil {
 		log.Fatalf("Failed to start server: %s", err)
 	}

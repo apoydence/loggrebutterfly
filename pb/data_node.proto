@@ -4,6 +4,7 @@ package pb;
 
 service DataNode {
   rpc Write(WriteInfo) returns (WriteResponse) {}
+  rpc Read(ReadInfo) returns (stream ReadData) {}
 }
 
 message WriteInfo {
@@ -12,3 +13,12 @@ message WriteInfo {
 
 message WriteResponse {
 }
+
+message ReadInfo {
+  string name = 1;
+}
+
+message ReadData {
+  bytes Payload = 1;
+}
+

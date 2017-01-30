@@ -15,12 +15,20 @@ type Writer interface {
 	Write(data []byte) (err error)
 }
 
-type Server struct {
-	writer Writer
+type ReadFetcher interface {
+	Reader(name string) (reader func() ([]byte, error), err error)
 }
 
-func Start(addr string, writer Writer) (actualAddr string, err error) {
-	s := &Server{writer: writer}
+type Server struct {
+	writer Writer
+	reader ReadFetcher
+}
+
+func Start(addr string, writer Writer, reader ReadFetcher) (actualAddr string, err error) {
+	s := &Server{
+		writer: writer,
+		reader: reader,
+	}
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -44,4 +52,22 @@ func (s *Server) Write(ctx context.Context, in *pb.WriteInfo) (*pb.WriteResponse
 	}
 
 	return new(pb.WriteResponse), nil
+}
+
+func (s *Server) Read(info *pb.ReadInfo, server pb.DataNode_ReadServer) error {
+	reader, err := s.reader.Reader(info.Name)
+	if err != nil {
+		return err
+	}
+
+	for {
+		data, err := reader()
+		if err != nil {
+			return err
+		}
+
+		if err := server.Send(&pb.ReadData{Payload: data}); err != nil {
+			return err
+		}
+	}
 }

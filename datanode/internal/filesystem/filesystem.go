@@ -39,6 +39,22 @@ func (f *FileSystem) Writer(name string) (writer router.Writer, err error) {
 	return nodeWriter{name: name, sender: sender}, nil
 }
 
+func (f *FileSystem) Reader(name string) (reader func() ([]byte, error), err error) {
+	rx, err := f.client.Read(context.Background(), &pb.BufferInfo{Name: name})
+	if err != nil {
+		return nil, err
+	}
+
+	return func() ([]byte, error) {
+		packet, err := rx.Recv()
+		if err != nil {
+			return nil, err
+		}
+
+		return packet.Message, nil
+	}, nil
+}
+
 func setupClient(addr string) pb.NodeClient {
 	conn, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {

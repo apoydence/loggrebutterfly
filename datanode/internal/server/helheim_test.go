@@ -27,3 +27,28 @@ func (m *mockWriter) Write(data []byte) (err error) {
 	m.WriteInput.Data <- data
 	return <-m.WriteOutput.Err
 }
+
+type mockReadFetcher struct {
+	ReaderCalled chan bool
+	ReaderInput  struct {
+		Name chan string
+	}
+	ReaderOutput struct {
+		Reader chan func() ([]byte, error)
+		Err    chan error
+	}
+}
+
+func newMockReadFetcher() *mockReadFetcher {
+	m := &mockReadFetcher{}
+	m.ReaderCalled = make(chan bool, 100)
+	m.ReaderInput.Name = make(chan string, 100)
+	m.ReaderOutput.Reader = make(chan func() ([]byte, error), 100)
+	m.ReaderOutput.Err = make(chan error, 100)
+	return m
+}
+func (m *mockReadFetcher) Reader(name string) (reader func() ([]byte, error), err error) {
+	m.ReaderCalled <- true
+	m.ReaderInput.Name <- name
+	return <-m.ReaderOutput.Reader, <-m.ReaderOutput.Err
+}

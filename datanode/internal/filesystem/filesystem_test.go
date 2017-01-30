@@ -86,6 +86,38 @@ func TestFileSystemWriter(t *testing.T) {
 	})
 }
 
+func TestFileSystemReader(t *testing.T) {
+	t.Parallel()
+	o := onpar.New()
+	defer o.Run(t)
+
+	setup(o)
+
+	o.Spec("it returns data from the node", func(t TFS) {
+		defer close(t.mockNodeServer.ReadOutput.Ret0)
+		go func() {
+			var rx pb.Node_ReadServer
+			Expect(t, t.mockNodeServer.ReadInput.Arg1).To(ViaPolling(
+				Chain(Receive(), Fetch(&rx)),
+			))
+
+			err := rx.Send(&pb.ReadDataPacket{Message: []byte("some-data")})
+			Expect(t, err == nil).To(BeTrue())
+		}()
+
+		reader, err := t.fs.Reader("some-name")
+		Expect(t, err == nil).To(BeTrue())
+
+		data, err := reader()
+		Expect(t, err == nil).To(BeTrue())
+		Expect(t, data).To(Equal([]byte("some-data")))
+
+		Expect(t, t.mockNodeServer.ReadInput.Arg0).To(ViaPolling(
+			Chain(Receive(), Equal(&pb.BufferInfo{Name: "some-name"})),
+		))
+	})
+}
+
 func setup(o *onpar.Onpar) {
 	o.BeforeEach(func(t *testing.T) TFS {
 		addr, mockNodeServer := startMockNode()

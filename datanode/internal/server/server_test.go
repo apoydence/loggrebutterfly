@@ -5,6 +5,7 @@ package server_test
 import (
 	"context"
 	"flag"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -31,8 +32,10 @@ func TestMain(m *testing.M) {
 
 type TS struct {
 	*testing.T
-	client     pb.DataNodeClient
-	mockWriter *mockWriter
+	client pb.DataNodeClient
+
+	mockWriter      *mockWriter
+	mockReadFetcher *mockReadFetcher
 }
 
 func TestServer(t *testing.T) {
@@ -42,15 +45,19 @@ func TestServer(t *testing.T) {
 
 	o.BeforeEach(func(t *testing.T) TS {
 		mockWriter := newMockWriter()
+		mockReadFetcher := newMockReadFetcher()
 		close(mockWriter.WriteOutput.Err)
 
-		addr, err := server.Start("127.0.0.1:0", mockWriter)
+		close(mockReadFetcher.ReaderOutput.Err)
+
+		addr, err := server.Start("127.0.0.1:0", mockWriter, mockReadFetcher)
 		Expect(t, err == nil).To(BeTrue())
 
 		return TS{
-			T:          t,
-			client:     fetchClient(addr),
-			mockWriter: mockWriter,
+			T:               t,
+			client:          fetchClient(addr),
+			mockWriter:      mockWriter,
+			mockReadFetcher: mockReadFetcher,
 		}
 	})
 
@@ -64,6 +71,34 @@ func TestServer(t *testing.T) {
 			Chain(Receive(), Equal([]byte("some-data"))),
 		))
 	})
+
+	o.Spec("it reads from the reader", func(t TS) {
+		t.mockReadFetcher.ReaderOutput.Reader <- buildDataF("A", "B", "C")
+
+		resp, err := t.client.Read(context.Background(), &pb.ReadInfo{
+			Name: "some-name",
+		})
+		Expect(t, err == nil).To(BeTrue())
+
+		Expect(t, t.mockReadFetcher.ReaderInput.Name).To(ViaPolling(
+			Chain(Receive(), Equal("some-name")),
+		))
+
+		data, err := resp.Recv()
+		Expect(t, err == nil).To(BeTrue())
+		Expect(t, data).To(Equal(&pb.ReadData{Payload: []byte("A")}))
+
+		data, err = resp.Recv()
+		Expect(t, err == nil).To(BeTrue())
+		Expect(t, data).To(Equal(&pb.ReadData{Payload: []byte("B")}))
+
+		data, err = resp.Recv()
+		Expect(t, err == nil).To(BeTrue())
+		Expect(t, data).To(Equal(&pb.ReadData{Payload: []byte("C")}))
+
+		_, err = resp.Recv()
+		Expect(t, err == nil).To(BeFalse())
+	})
 }
 
 func fetchClient(addr string) pb.DataNodeClient {
@@ -72,4 +107,19 @@ func fetchClient(addr string) pb.DataNodeClient {
 		panic(err)
 	}
 	return pb.NewDataNodeClient(conn)
+}
+
+func buildDataF(data ...string) func() ([]byte, error) {
+	d := make(chan []byte, len(data)+1)
+	e := make(chan error, len(data)+1)
+	for _, x := range data {
+		d <- []byte(x)
+		e <- nil
+	}
+	d <- nil
+	e <- io.EOF
+
+	return func() ([]byte, error) {
+		return <-d, <-e
+	}
 }

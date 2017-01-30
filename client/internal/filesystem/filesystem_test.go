@@ -156,6 +156,61 @@ func TestFileSystemWriter(t *testing.T) {
 	})
 }
 
+func TestFileSystemReader(t *testing.T) {
+	t.Parallel()
+	o := onpar.New()
+	defer o.Run(t)
+
+	setup(o)
+
+	o.Group("when data node returns an error", func() {
+		o.BeforeEach(func(t TFS) TFS {
+			writeRoutes(t)
+			close(t.mockDataNodeServers[1].WriteOutput.Ret0)
+			testhelpers.AlwaysReturn(t.mockDataNodeServers[1].WriteOutput.Ret1, fmt.Errorf("some-error"))
+			return t
+		})
+
+		o.Spec("it returns an error", func(t TFS) {
+			_, err := t.fs.Reader("some-name")
+			Expect(t, err == nil).To(BeFalse())
+		})
+	})
+
+	o.Group("when data node does not return an error", func() {
+		o.BeforeEach(func(t TFS) TFS {
+			writeRoutes(t)
+			close(t.mockDataNodeServers[1].WriteOutput.Ret0)
+			testhelpers.AlwaysReturn(t.mockDataNodeServers[1].WriteOutput.Ret1, fmt.Errorf("some-error"))
+			return t
+		})
+
+		o.Spec("it returns data from the data node", func(t TFS) {
+			go func() {
+				defer close(t.mockDataNodeServers[1].ReadOutput.Ret0)
+				var rx pb.DataNode_ReadServer
+				Expect(t, t.mockDataNodeServers[1].ReadInput.Arg1).To(ViaPolling(
+					Chain(Receive(), Fetch(&rx)),
+				))
+
+				err := rx.Send(&pb.ReadData{Payload: []byte("some-data")})
+				Expect(t, err == nil).To(BeTrue())
+			}()
+
+			reader, err := t.fs.Reader("some-name-b")
+			Expect(t, err == nil).To(BeTrue())
+
+			Expect(t, t.mockDataNodeServers[1].ReadInput.Arg0).To(ViaPolling(
+				Chain(Receive(), Equal(&pb.ReadInfo{Name: "some-name-b"})),
+			))
+
+			data, err := reader.Read()
+			Expect(t, err == nil).To(BeTrue())
+			Expect(t, data).To(Equal([]byte("some-data")))
+		})
+	})
+}
+
 func writeRoutes(t TFS) {
 	testhelpers.AlwaysReturn(t.mockMasterServer.RoutesOutput.Ret0, &pb.RoutesResponse{
 		Routes: []*pb.RouteInfo{
