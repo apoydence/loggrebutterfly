@@ -33,6 +33,7 @@ import (
 
 var (
 	masterPort    int
+	dataNodeAddrs []string
 	schedAddr     string
 	mockScheduler *mockSchedulerServer
 	mockDataNodes []*mockDataNodeServer
@@ -91,7 +92,7 @@ func TestMaster(t *testing.T) {
 			var info []*talariapb.ClusterInfo
 			mu.Lock()
 			for _, name := range createResults {
-				info = append(info, &talariapb.ClusterInfo{Name: name, Leader: "some-leader"})
+				info = append(info, &talariapb.ClusterInfo{Name: name, Leader: dataNodeAddrs[0]})
 			}
 			mu.Unlock()
 
@@ -154,22 +155,21 @@ func TestMaster(t *testing.T) {
 			return len(resp.Routes) >= 2
 		}
 		Expect(t, f).To(ViaPolling(BeTrue()))
-		Expect(t, resp.Routes[0].Leader).To(Equal("some-leader"))
+		Expect(t, resp.Routes[0].Leader).To(Equal(dataNodeAddrs[0]))
 	})
 }
 
 func setup() []*os.Process {
 	schedAddr, mockScheduler = startMockScheduler()
 
-	var routers []string
 	for i := 0; i < 3; i++ {
 		addr, m := startMockDataNode()
-		routers = append(routers, addr)
+		dataNodeAddrs = append(dataNodeAddrs, addr)
 		mockDataNodes = append(mockDataNodes, m)
 	}
 
 	masterPort = end2end.AvailablePort()
-	masterPs := startMaster(masterPort, schedAddr, routers)
+	masterPs := startMaster(masterPort, schedAddr, dataNodeAddrs)
 
 	return []*os.Process{
 		masterPs,
@@ -190,6 +190,7 @@ func startMaster(port int, schedAddr string, routers []string) *os.Process {
 		fmt.Sprintf("ADDR=127.0.0.1:%d", port),
 		fmt.Sprintf("SCHEDULER_ADDR=%s", schedAddr),
 		fmt.Sprintf("ROUTER_ADDRS=%s", buildDataNodeAddrs(routers)),
+		fmt.Sprintf("ROUTER_EXTERNAL_ADDRS=%s", buildDataNodeAddrs(routers)),
 		fmt.Sprintf("TALARIA_NODE_ADDRS=%s", buildDataNodeAddrs(routers)),
 		"BALANCER_INTERVAL=1ms",
 		"FILLER_INTERVAL=1ms",
