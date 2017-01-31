@@ -206,8 +206,8 @@ func startTalariaScheduler(nodePorts []int) (port int, ps *os.Process) {
 	}
 
 	if testing.Verbose() {
-		// command.Stdout = os.Stdout
-		// command.Stderr = os.Stderr
+		command.Stdout = os.Stdout
+		command.Stderr = os.Stderr
 	}
 
 	err = command.Start()
