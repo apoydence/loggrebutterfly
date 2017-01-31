@@ -168,8 +168,8 @@ func startMaster(routerPorts, extRouterPorts, nodePorts, nodeIntraPorts []int) (
 	command.Env = []string{
 		fmt.Sprintf("ADDR=127.0.0.1:%d", port),
 		fmt.Sprintf("SCHEDULER_ADDR=127.0.0.1:%d", schedPort),
-		fmt.Sprintf("ROUTER_ADDRS=%s", buildNodeURIs(routerPorts)),
-		fmt.Sprintf("ROUTER_EXTERNAL_ADDRS=%s", buildNodeURIs(extRouterPorts)),
+		fmt.Sprintf("DATA_NODE_ADDRS=%s", buildNodeURIs(routerPorts)),
+		fmt.Sprintf("DATA_NODE_EXTERNAL_ADDRS=%s", buildNodeURIs(extRouterPorts)),
 		fmt.Sprintf("TALARIA_NODE_ADDRS=%s", buildNodeURIs(nodePorts)),
 		"BALANCER_INTERVAL=1s",
 		"FILLER_INTERVAL=1s",

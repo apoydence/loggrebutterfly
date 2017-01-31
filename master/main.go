@@ -17,7 +17,7 @@ func main() {
 
 	conf := config.Load()
 
-	metricsReader := rangemetrics.New(conf.RouterAddrs)
+	metricsReader := rangemetrics.New(conf.DataNodeAddrs)
 	fs := filesystem.New(conf.SchedulerAddr, conf.TalariaNodeConverter)
 
 	maintainer.StartBalancer(metricsReader, fs,

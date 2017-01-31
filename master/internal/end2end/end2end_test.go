@@ -189,8 +189,8 @@ func startMaster(port int, schedAddr string, routers []string) *os.Process {
 	command.Env = []string{
 		fmt.Sprintf("ADDR=127.0.0.1:%d", port),
 		fmt.Sprintf("SCHEDULER_ADDR=%s", schedAddr),
-		fmt.Sprintf("ROUTER_ADDRS=%s", buildDataNodeAddrs(routers)),
-		fmt.Sprintf("ROUTER_EXTERNAL_ADDRS=%s", buildDataNodeAddrs(routers)),
+		fmt.Sprintf("DATA_NODE_EXTERNAL_ADDRS=%s", buildDataNodeAddrs(routers)),
+		fmt.Sprintf("DATA_NODE_ADDRS=%s", buildDataNodeAddrs(routers)),
 		fmt.Sprintf("TALARIA_NODE_ADDRS=%s", buildDataNodeAddrs(routers)),
 		"BALANCER_INTERVAL=1ms",
 		"FILLER_INTERVAL=1ms",
