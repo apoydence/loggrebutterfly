@@ -18,8 +18,8 @@ import (
 
 	"github.com/apoydence/loggrebutterfly/client"
 	"github.com/apoydence/loggrebutterfly/internal/end2end"
-	"github.com/apoydence/loggrebutterfly/pb"
 	v2 "github.com/apoydence/loggrebutterfly/pb/loggregator/v2"
+	pb "github.com/apoydence/loggrebutterfly/pb/v1"
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"

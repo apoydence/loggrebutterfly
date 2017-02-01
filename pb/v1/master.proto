@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package pb;
+package loggrebutterfly;
 
 service Master {
   rpc Routes(RoutesInfo) returns (RoutesResponse) {}

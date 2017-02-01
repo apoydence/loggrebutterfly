@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/apoydence/loggrebutterfly/pb"
+	pb "github.com/apoydence/loggrebutterfly/pb/v1"
 	"github.com/apoydence/petasos/reader"
 	"github.com/apoydence/petasos/router"
 	"google.golang.org/grpc"

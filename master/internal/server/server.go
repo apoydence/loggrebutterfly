@@ -4,9 +4,9 @@ import (
 	"log"
 	"net"
 
-	"golang.org/x/net/context"
+	pb "github.com/apoydence/loggrebutterfly/pb/v1"
 
-	"github.com/apoydence/loggrebutterfly/pb"
+	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
 )

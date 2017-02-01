@@ -6,7 +6,7 @@
 package filesystem_test
 
 import (
-	"github.com/apoydence/loggrebutterfly/pb"
+	pb "github.com/apoydence/loggrebutterfly/pb/v1"
 	"golang.org/x/net/context"
 )
 
