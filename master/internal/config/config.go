@@ -25,9 +25,11 @@ type Config struct {
 
 func Load() Config {
 	conf := Config{
-		MaxRoutes: 10,
-		MinRoutes: 4,
-		PprofAddr: "localhost:0",
+		MaxRoutes:        10,
+		MinRoutes:        4,
+		BalancerInterval: 5 * time.Second,
+		FillerInterval:   time.Second,
+		PprofAddr:        "localhost:0",
 	}
 	if err := envstruct.Load(&conf); err != nil {
 		log.Fatalf("Unable to load config: %s", err)
