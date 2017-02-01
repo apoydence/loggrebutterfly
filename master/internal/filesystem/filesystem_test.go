@@ -110,11 +110,11 @@ func TestFileSystemList(t *testing.T) {
 			return t
 		})
 
-		o.Spec("it lists the buffers from the scheduler and converts to data node addrs", func(t TF) {
+		o.Spec("it lists the buffers from the scheduler", func(t TF) {
 			files, err := t.fs.List()
 			Expect(t, err == nil).To(BeTrue())
 
-			Expect(t, files).To(Contain("A", "B", "C"))
+			Expect(t, files).To(Contain("a", "b", "c"))
 		})
 	})
 }

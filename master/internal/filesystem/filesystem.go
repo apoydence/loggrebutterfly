@@ -40,12 +40,7 @@ func (f *FileSystem) List() (files []string, err error) {
 	}
 
 	for name, _ := range m {
-		addr, ok := f.nodeAddrConverter[name]
-		if !ok {
-			continue
-		}
-
-		files = append(files, addr)
+		files = append(files, name)
 	}
 
 	return files, nil
@@ -63,6 +58,7 @@ func (f *FileSystem) Routes() (routes map[string]string, err error) {
 	for _, info := range resp.Info {
 		addr, ok := f.nodeAddrConverter[info.Leader]
 		if !ok {
+			log.Printf("Unknown node address (name=%s): '%s'\n", info.Name, info.Leader)
 			continue
 		}
 		routes[info.Name] = addr

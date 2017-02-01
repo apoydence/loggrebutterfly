@@ -36,7 +36,7 @@ func Load() Config {
 	}
 
 	if len(conf.DataNodeExtAddrs) != len(conf.TalariaNodeAddrs) {
-		log.Fatalf("ROUTER_EXTERNAL_ADDRS (%d) and TALARIA_NODE_ADDRS (%d) must have same count", len(conf.DataNodeExtAddrs), len(conf.TalariaNodeAddrs))
+		log.Fatalf("DATA_NODE_EXTERNAL_ADDRS (%d) and TALARIA_NODE_ADDRS (%d) must have same count", len(conf.DataNodeExtAddrs), len(conf.TalariaNodeAddrs))
 	}
 
 	conf.TalariaNodeConverter = make(map[string]string)
