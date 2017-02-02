@@ -164,6 +164,10 @@ type receiverWrapper struct {
 
 func (w *receiverWrapper) Read() ([]byte, error) {
 	data, err := w.rx.Recv()
+	if err != nil && grpc.ErrorDesc(err) == "EOF" {
+		return nil, io.EOF
+	}
+
 	if err != nil {
 		return nil, err
 	}

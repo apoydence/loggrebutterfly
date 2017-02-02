@@ -3,6 +3,7 @@ package filesystem_test
 import (
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -166,22 +167,22 @@ func TestFileSystemReader(t *testing.T) {
 	o.Group("when data node returns an error", func() {
 		o.BeforeEach(func(t TFS) TFS {
 			writeRoutes(t)
-			close(t.mockDataNodeServers[1].WriteOutput.Ret0)
-			testhelpers.AlwaysReturn(t.mockDataNodeServers[1].WriteOutput.Ret1, fmt.Errorf("some-error"))
+			testhelpers.AlwaysReturn(t.mockDataNodeServers[1].ReadOutput.Ret0, io.EOF)
 			return t
 		})
 
-		o.Spec("it returns an error", func(t TFS) {
-			_, err := t.fs.Reader("some-name")
-			Expect(t, err == nil).To(BeFalse())
+		o.Spec("it converts it to an io.EOF", func(t TFS) {
+			reader, err := t.fs.Reader("some-name-b")
+			Expect(t, err == nil).To(BeTrue())
+
+			_, err = reader.Read()
+			Expect(t, err).To(Equal(io.EOF))
 		})
 	})
 
 	o.Group("when data node does not return an error", func() {
 		o.BeforeEach(func(t TFS) TFS {
 			writeRoutes(t)
-			close(t.mockDataNodeServers[1].WriteOutput.Ret0)
-			testhelpers.AlwaysReturn(t.mockDataNodeServers[1].WriteOutput.Ret1, fmt.Errorf("some-error"))
 			return t
 		})
 
