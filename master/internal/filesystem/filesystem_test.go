@@ -13,7 +13,7 @@ import (
 	"github.com/apoydence/eachers/testhelpers"
 	"github.com/apoydence/loggrebutterfly/master/internal/filesystem"
 	"github.com/apoydence/onpar"
-	"github.com/apoydence/talaria/pb"
+	pb "github.com/apoydence/talaria/api/v1"
 
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"

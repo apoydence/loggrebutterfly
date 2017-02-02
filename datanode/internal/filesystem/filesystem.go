@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/apoydence/petasos/router"
-	"github.com/apoydence/talaria/pb"
+	pb "github.com/apoydence/talaria/api/v1"
 	"google.golang.org/grpc"
 )
 

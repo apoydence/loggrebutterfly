@@ -113,8 +113,17 @@ func TestMaster(t *testing.T) {
 		})
 
 		reader := client.ReadFrom("some-id")
-		rxEnvelope, err := reader()
-		Expect(t, err == nil).To(BeTrue())
+
+		var rxEnvelope *v2.Envelope
+		f = func() bool {
+			var err error
+			rxEnvelope, err = reader()
+			return err == nil
+		}
+		Expect(t, f).To(ViaPollingMatcher{
+			Duration: 3 * time.Second,
+			Matcher:  BeTrue(),
+		})
 		Expect(t, rxEnvelope).To(Equal(e))
 	})
 }

@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/apoydence/talaria/pb"
+	pb "github.com/apoydence/talaria/api/v1"
 	"google.golang.org/grpc"
 )
 
@@ -58,8 +58,7 @@ func (f *FileSystem) Routes() (routes map[string]string, err error) {
 	for _, info := range resp.Info {
 		addr, ok := f.nodeAddrConverter[info.Leader]
 		if !ok {
-			log.Printf("Unknown node address (name=%s): '%s'\n", info.Name, info.Leader)
-			continue
+			log.Printf("Unknown node address (info=%+v) (name=%s): '%s'\n", info, info.Name, info.Leader)
 		}
 		routes[info.Name] = addr
 	}

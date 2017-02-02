@@ -7,7 +7,7 @@ package end2end_test
 
 import (
 	"github.com/apoydence/loggrebutterfly/pb/intra"
-	"github.com/apoydence/talaria/pb"
+	pb "github.com/apoydence/talaria/api/v1"
 	"golang.org/x/net/context"
 )
 

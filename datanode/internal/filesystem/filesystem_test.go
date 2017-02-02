@@ -15,7 +15,7 @@ import (
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"
-	"github.com/apoydence/talaria/pb"
+	pb "github.com/apoydence/talaria/api/v1"
 )
 
 func TestMain(m *testing.M) {

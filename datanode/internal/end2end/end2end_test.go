@@ -25,7 +25,7 @@ import (
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"
 	"github.com/apoydence/petasos/router"
-	talariapb "github.com/apoydence/talaria/pb"
+	talariapb "github.com/apoydence/talaria/api/v1"
 	"github.com/golang/protobuf/proto"
 	"github.com/onsi/gomega/gexec"
 )

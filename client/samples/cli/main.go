@@ -1,11 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -87,13 +87,15 @@ func tailCommand(client *client.Client) {
 
 	rx := client.ReadFrom(*sourceUUID)
 
+	var i int
 	for {
 		envelope, err := rx()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("%+v\n", envelope)
+		fmt.Printf("(%d) %+v\n", i, envelope)
+		i++
 	}
 }
 
@@ -108,24 +110,16 @@ func writeDataCommand(client *client.Client) {
 	}()
 
 	var count int
-	buffer := make([]byte, *writePacketSize)
-	for {
-		n, err := os.Stdin.Read(buffer)
-		if err == io.EOF {
-			log.Printf("Done writing (expected=%d)", count)
-			return
-		}
+	scanner := bufio.NewScanner(os.Stdin)
 
-		if err != nil {
-			log.Fatal(err)
-		}
-
+	for scanner.Scan() {
 		var e v2.Envelope
-		if err = json.Unmarshal(buffer[:n], &e); err != nil {
+		if err := json.Unmarshal(scanner.Bytes(), &e); err != nil {
 			log.Fatalf("unable to parse (via json) to v2.Envelope: %s", err)
 		}
 
 		for i := 0; i < 10; i++ {
+			var err error
 			if err = client.Write(&e); err == nil {
 				break
 			}

@@ -24,7 +24,7 @@ import (
 	pb "github.com/apoydence/loggrebutterfly/pb/v1"
 	"github.com/apoydence/onpar"
 	"github.com/apoydence/petasos/router"
-	talariapb "github.com/apoydence/talaria/pb"
+	talariapb "github.com/apoydence/talaria/api/v1"
 	"github.com/onsi/gomega/gexec"
 
 	. "github.com/apoydence/onpar/expect"

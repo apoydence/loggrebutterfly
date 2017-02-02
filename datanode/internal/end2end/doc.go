@@ -1,6 +1,6 @@
 package end2end
 
-import "github.com/apoydence/talaria/pb"
+import pb "github.com/apoydence/talaria/api/v1"
 
 //go:generate hel
 
