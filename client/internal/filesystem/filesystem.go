@@ -20,6 +20,7 @@ type FileSystem struct {
 }
 
 type clientInfo struct {
+	addr   string
 	client pb.DataNodeClient
 	closer io.Closer
 }
@@ -49,7 +50,8 @@ func (f *FileSystem) Writer(name string) (writer router.Writer, err error) {
 	}
 
 	wrapper := &senderWrapper{
-		client: client,
+		client: client.client,
+		addr:   client.addr,
 		reset: func() {
 			r := f.routes
 			f.routes = nil
@@ -70,12 +72,12 @@ func (f *FileSystem) Reader(name string) (reader reader.Reader, err error) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	rx, err := client.Read(ctx, &pb.ReadInfo{Name: name})
+	rx, err := client.client.Read(ctx, &pb.ReadInfo{Name: name})
 	if err != nil {
 		return nil, err
 	}
 
-	return &receiverWrapper{rx: rx, cancel: cancel}, nil
+	return &receiverWrapper{rx: rx, cancel: cancel, addr: client.addr}, nil
 }
 
 func (f *FileSystem) setupRoutes() error {
@@ -97,13 +99,13 @@ func (f *FileSystem) setupRoutes() error {
 	return nil
 }
 
-func (f *FileSystem) fetchRoute(name string) (client pb.DataNodeClient, ok bool) {
+func (f *FileSystem) fetchRoute(name string) (client clientInfo, ok bool) {
 	if err := f.setupRoutes(); err != nil {
-		return nil, false
+		return clientInfo{}, false
 	}
 
 	info, ok := f.routes[name]
-	return info.client, ok
+	return info, ok
 }
 
 func (f *FileSystem) list() (files []*pb.RouteInfo, err error) {
@@ -130,12 +132,14 @@ func setupDataClient(addr string) clientInfo {
 		log.Fatalf("unable to connect to master: %s", err)
 	}
 	return clientInfo{
+		addr:   addr,
 		client: pb.NewDataNodeClient(conn),
 		closer: conn,
 	}
 }
 
 type senderWrapper struct {
+	addr   string
 	client pb.DataNodeClient
 	err    error
 	reset  func()
@@ -151,13 +155,14 @@ func (w *senderWrapper) Write(data []byte) error {
 
 	if w.err != nil {
 		w.reset()
-		return w.err
+		return fmt.Errorf("[WRITE TO %s]: %s", w.addr, w.err)
 	}
 
 	return nil
 }
 
 type receiverWrapper struct {
+	addr   string
 	rx     pb.DataNode_ReadClient
 	cancel func()
 }
@@ -169,7 +174,7 @@ func (w *receiverWrapper) Read() ([]byte, error) {
 	}
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("[READ FROM %s]: %s", w.addr, err)
 	}
 
 	return data.Payload, nil
