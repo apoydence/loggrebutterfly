@@ -10,6 +10,8 @@ import (
 	"github.com/apoydence/loggrebutterfly/datanode/internal/server"
 	"github.com/apoydence/loggrebutterfly/datanode/internal/server/intra"
 	"github.com/apoydence/petasos/router"
+
+	_ "net/http/pprof"
 )
 
 func main() {

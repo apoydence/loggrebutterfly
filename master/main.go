@@ -9,6 +9,8 @@ import (
 	"github.com/apoydence/loggrebutterfly/master/internal/rangemetrics"
 	"github.com/apoydence/loggrebutterfly/master/internal/server"
 	"github.com/apoydence/petasos/maintainer"
+
+	_ "net/http/pprof"
 )
 
 func main() {
