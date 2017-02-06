@@ -1,6 +1,6 @@
 package filesystem
 
-import pb "github.com/apoydence/loggrebutterfly/pb/v1"
+import pb "github.com/apoydence/loggrebutterfly/api/v1"
 
 //go:generate hel
 

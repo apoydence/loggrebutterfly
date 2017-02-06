@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/apoydence/loggrebutterfly/client"
-	v2 "github.com/apoydence/loggrebutterfly/pb/loggregator/v2"
-	pb "github.com/apoydence/loggrebutterfly/pb/v1"
+	v2 "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
+	pb "github.com/apoydence/loggrebutterfly/api/v1"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"

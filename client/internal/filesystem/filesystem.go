@@ -8,7 +8,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	pb "github.com/apoydence/loggrebutterfly/pb/v1"
+	pb "github.com/apoydence/loggrebutterfly/api/v1"
 	"github.com/apoydence/petasos/reader"
 	"github.com/apoydence/petasos/router"
 )

@@ -4,7 +4,7 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/apoydence/loggrebutterfly/pb/v1"
+	pb "github.com/apoydence/loggrebutterfly/api/v1"
 
 	"google.golang.org/grpc"
 )

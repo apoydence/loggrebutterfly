@@ -15,7 +15,7 @@ import (
 
 	"github.com/apoydence/eachers/testhelpers"
 	"github.com/apoydence/loggrebutterfly/datanode/internal/server"
-	pb "github.com/apoydence/loggrebutterfly/pb/v1"
+	pb "github.com/apoydence/loggrebutterfly/api/v1"
 
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"

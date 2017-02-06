@@ -5,7 +5,7 @@ import (
 
 	"github.com/apoydence/loggrebutterfly/client/internal/filesystem"
 	"github.com/apoydence/loggrebutterfly/client/internal/hasher"
-	v2 "github.com/apoydence/loggrebutterfly/pb/loggregator/v2"
+	v2 "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
 	"github.com/apoydence/petasos/reader"
 	"github.com/apoydence/petasos/router"
 	"github.com/golang/protobuf/proto"

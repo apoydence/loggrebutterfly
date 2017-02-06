@@ -20,8 +20,8 @@ import (
 
 	"github.com/apoydence/eachers/testhelpers"
 	"github.com/apoydence/loggrebutterfly/internal/end2end"
-	"github.com/apoydence/loggrebutterfly/pb/intra"
-	pb "github.com/apoydence/loggrebutterfly/pb/v1"
+	"github.com/apoydence/loggrebutterfly/api/intra"
+	pb "github.com/apoydence/loggrebutterfly/api/v1"
 	"github.com/apoydence/onpar"
 	"github.com/apoydence/petasos/router"
 	talariapb "github.com/apoydence/talaria/api/v1"

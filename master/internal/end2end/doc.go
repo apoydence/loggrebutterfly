@@ -1,7 +1,7 @@
 package end2end
 
 import (
-	"github.com/apoydence/loggrebutterfly/pb/intra"
+	"github.com/apoydence/loggrebutterfly/api/intra"
 	pb "github.com/apoydence/talaria/api/v1"
 )
 

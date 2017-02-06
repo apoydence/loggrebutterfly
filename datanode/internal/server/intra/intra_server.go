@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/apoydence/loggrebutterfly/pb/intra"
+	"github.com/apoydence/loggrebutterfly/api/intra"
 	"github.com/apoydence/petasos/router"
 	"google.golang.org/grpc"
 )

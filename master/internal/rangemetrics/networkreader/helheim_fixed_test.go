@@ -6,7 +6,7 @@
 package networkreader_test
 
 import (
-	"github.com/apoydence/loggrebutterfly/pb/intra"
+	"github.com/apoydence/loggrebutterfly/api/intra"
 	"golang.org/x/net/context"
 )
 

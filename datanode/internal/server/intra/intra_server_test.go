@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/apoydence/loggrebutterfly/datanode/internal/server/intra"
-	pb "github.com/apoydence/loggrebutterfly/pb/intra"
+	pb "github.com/apoydence/loggrebutterfly/api/intra"
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"

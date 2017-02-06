@@ -1,6 +1,6 @@
 package networkreader
 
-import "github.com/apoydence/loggrebutterfly/pb/intra"
+import "github.com/apoydence/loggrebutterfly/api/intra"
 
 //go:generate hel
 
