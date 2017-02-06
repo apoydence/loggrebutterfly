@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -90,6 +91,11 @@ func tailCommand(client *client.Client) {
 	var i int
 	for {
 		envelope, err := rx()
+		if err == io.EOF {
+			time.Sleep(250 * time.Millisecond)
+			continue
+		}
+
 		if err != nil {
 			log.Fatal(err)
 		}
