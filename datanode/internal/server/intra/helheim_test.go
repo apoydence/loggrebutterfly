@@ -10,7 +10,7 @@ import "github.com/apoydence/petasos/router"
 type mockMetricsReader struct {
 	MetricsCalled chan bool
 	MetricsInput  struct {
-		File chan string
+		Rn chan router.RangeName
 	}
 	MetricsOutput struct {
 		Metric chan router.Metric
@@ -20,12 +20,12 @@ type mockMetricsReader struct {
 func newMockMetricsReader() *mockMetricsReader {
 	m := &mockMetricsReader{}
 	m.MetricsCalled = make(chan bool, 100)
-	m.MetricsInput.File = make(chan string, 100)
+	m.MetricsInput.Rn = make(chan router.RangeName, 100)
 	m.MetricsOutput.Metric = make(chan router.Metric, 100)
 	return m
 }
-func (m *mockMetricsReader) Metrics(file string) (metric router.Metric) {
+func (m *mockMetricsReader) Metrics(rn router.RangeName) (metric router.Metric) {
 	m.MetricsCalled <- true
-	m.MetricsInput.File <- file
+	m.MetricsInput.Rn <- rn
 	return <-m.MetricsOutput.Metric
 }

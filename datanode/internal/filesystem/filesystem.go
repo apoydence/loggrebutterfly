@@ -31,7 +31,8 @@ func (f *FileSystem) List() (file []string, err error) {
 }
 
 func (f *FileSystem) Writer(name string) (writer router.Writer, err error) {
-	sender, err := f.client.Write(context.Background())
+	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+	sender, err := f.client.Write(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +41,8 @@ func (f *FileSystem) Writer(name string) (writer router.Writer, err error) {
 }
 
 func (f *FileSystem) Reader(name string) (reader func() ([]byte, error), err error) {
-	rx, err := f.client.Read(context.Background(), &pb.BufferInfo{Name: name})
+	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+	rx, err := f.client.Read(ctx, &pb.BufferInfo{Name: name})
 	if err != nil {
 		return nil, err
 	}

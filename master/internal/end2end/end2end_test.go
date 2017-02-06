@@ -104,9 +104,6 @@ func TestMaster(t *testing.T) {
 	testhelpers.AlwaysReturn(mockScheduler.CreateOutput.Ret0, new(talariapb.CreateResponse))
 	close(mockScheduler.CreateOutput.Ret1)
 
-	testhelpers.AlwaysReturn(mockScheduler.ReadOnlyOutput.Ret0, new(talariapb.ReadOnlyResponse))
-	close(mockScheduler.ReadOnlyOutput.Ret1)
-
 	for _, m := range mockDataNodes {
 		testhelpers.AlwaysReturn(m.ReadMetricsOutput.Ret0, new(intra.ReadMetricsResponse))
 		close(m.ReadMetricsOutput.Ret1)

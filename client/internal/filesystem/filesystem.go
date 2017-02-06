@@ -4,143 +4,79 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"time"
+
+	"google.golang.org/grpc"
 
 	pb "github.com/apoydence/loggrebutterfly/pb/v1"
 	"github.com/apoydence/petasos/reader"
 	"github.com/apoydence/petasos/router"
-	"google.golang.org/grpc"
 )
 
+type RouteCache interface {
+	List() []string
+	FetchRoute(name string) (client pb.DataNodeClient, addr string)
+	Reset()
+}
+
 type FileSystem struct {
-	masterClient pb.MasterClient
-
-	routes map[string]clientInfo
+	cache RouteCache
 }
 
-type clientInfo struct {
-	addr   string
-	client pb.DataNodeClient
-	closer io.Closer
-}
-
-func New(masterAddr string) *FileSystem {
+func New(cache RouteCache) *FileSystem {
 	return &FileSystem{
-		masterClient: setupMasterClient(masterAddr),
+		cache: cache,
 	}
 }
 
 func (f *FileSystem) List() (files []string, err error) {
-	if err := f.setupRoutes(); err != nil {
-		return nil, err
+	list := f.cache.List()
+	if len(list) == 0 {
+		return nil, fmt.Errorf("unable to fetch route list")
 	}
-
-	for name, _ := range f.routes {
-		files = append(files, name)
-	}
-
-	return files, nil
+	return list, nil
 }
 
 func (f *FileSystem) Writer(name string) (writer router.Writer, err error) {
-	client, ok := f.fetchRoute(name)
-	if !ok {
+	client, addr := f.cache.FetchRoute(name)
+	if client == nil {
 		return nil, fmt.Errorf("unknown file: %s", name)
 	}
 
-	wrapper := &senderWrapper{
-		client: client.client,
-		addr:   client.addr,
-		reset: func() {
-			r := f.routes
-			f.routes = nil
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	sender, err := client.Write(ctx)
+	if err != nil {
+		f.cache.Reset()
+		return nil, err
+	}
 
-			for _, client := range r {
-				client.closer.Close()
-			}
-		},
+	wrapper := &senderWrapper{
+		sender: sender,
+		addr:   addr,
+		reset:  f.cache.Reset,
 	}
 
 	return wrapper, nil
 }
 
 func (f *FileSystem) Reader(name string) (reader reader.Reader, err error) {
-	client, ok := f.fetchRoute(name)
-	if !ok {
+	client, addr := f.cache.FetchRoute(name)
+	if client == nil {
 		return nil, fmt.Errorf("unknown file: %s", name)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	rx, err := client.client.Read(ctx, &pb.ReadInfo{Name: name})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	rx, err := client.Read(ctx, &pb.ReadInfo{Name: name})
 	if err != nil {
 		return nil, err
 	}
 
-	return &receiverWrapper{rx: rx, cancel: cancel, addr: client.addr}, nil
-}
-
-func (f *FileSystem) setupRoutes() error {
-	if f.routes != nil {
-		return nil
-	}
-
-	files, err := f.list()
-	if err != nil {
-		return err
-	}
-
-	f.routes = make(map[string]clientInfo)
-
-	for _, file := range files {
-		f.routes[file.Name] = setupDataClient(file.Leader)
-	}
-
-	return nil
-}
-
-func (f *FileSystem) fetchRoute(name string) (client clientInfo, ok bool) {
-	if err := f.setupRoutes(); err != nil {
-		return clientInfo{}, false
-	}
-
-	info, ok := f.routes[name]
-	return info, ok
-}
-
-func (f *FileSystem) list() (files []*pb.RouteInfo, err error) {
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
-	resp, err := f.masterClient.Routes(ctx, new(pb.RoutesInfo))
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Routes, nil
-}
-
-func setupMasterClient(addr string) pb.MasterClient {
-	conn, err := grpc.Dial(addr, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("unable to connect to master: %s", err)
-	}
-	return pb.NewMasterClient(conn)
-}
-
-func setupDataClient(addr string) clientInfo {
-	conn, err := grpc.Dial(addr, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("unable to connect to master: %s", err)
-	}
-	return clientInfo{
-		addr:   addr,
-		client: pb.NewDataNodeClient(conn),
-		closer: conn,
-	}
+	return &receiverWrapper{rx: rx, cancel: cancel, addr: addr}, nil
 }
 
 type senderWrapper struct {
 	addr   string
-	client pb.DataNodeClient
+	sender pb.DataNode_WriteClient
 	err    error
 	reset  func()
 }
@@ -150,10 +86,9 @@ func (w *senderWrapper) Write(data []byte) error {
 		return w.err
 	}
 
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(time.Second))
-	_, w.err = w.client.Write(ctx, &pb.WriteInfo{Payload: data})
-
-	if w.err != nil {
+	err := w.sender.Send(&pb.WriteInfo{Payload: data})
+	if err != nil {
+		w.err = err
 		w.reset()
 		return fmt.Errorf("[WRITE TO %s]: %s", w.addr, w.err)
 	}

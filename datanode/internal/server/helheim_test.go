@@ -5,27 +5,24 @@
 
 package server_test
 
-type mockWriter struct {
-	WriteCalled chan bool
-	WriteInput  struct {
-		Data chan []byte
-	}
-	WriteOutput struct {
-		Err chan error
+type mockWriteFetcher struct {
+	WriterCalled chan bool
+	WriterOutput struct {
+		Writer chan func(data []byte) (err error)
+		Err    chan error
 	}
 }
 
-func newMockWriter() *mockWriter {
-	m := &mockWriter{}
-	m.WriteCalled = make(chan bool, 100)
-	m.WriteInput.Data = make(chan []byte, 100)
-	m.WriteOutput.Err = make(chan error, 100)
+func newMockWriteFetcher() *mockWriteFetcher {
+	m := &mockWriteFetcher{}
+	m.WriterCalled = make(chan bool, 100)
+	m.WriterOutput.Writer = make(chan func(data []byte) (err error), 100)
+	m.WriterOutput.Err = make(chan error, 100)
 	return m
 }
-func (m *mockWriter) Write(data []byte) (err error) {
-	m.WriteCalled <- true
-	m.WriteInput.Data <- data
-	return <-m.WriteOutput.Err
+func (m *mockWriteFetcher) Writer() (writer func(data []byte) (err error), err error) {
+	m.WriterCalled <- true
+	return <-m.WriterOutput.Writer, <-m.WriterOutput.Err
 }
 
 type mockReadFetcher struct {

@@ -102,21 +102,15 @@ func TestMaster(t *testing.T) {
 			SourceUuid: "some-id",
 		}
 
-		f = func() bool {
-			err := client.Write(e)
-			return err == nil
-		}
-
-		Expect(t, f).To(ViaPollingMatcher{
-			Duration: 5 * time.Second,
-			Matcher:  BeTrue(),
-		})
-
 		reader := client.ReadFrom("some-id")
 
 		var rxEnvelope *v2.Envelope
 		f = func() bool {
-			var err error
+			err := client.Write(e)
+			if err != nil {
+				return false
+			}
+
 			rxEnvelope, err = reader()
 			return err == nil
 		}

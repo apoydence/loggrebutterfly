@@ -22,17 +22,18 @@ func main() {
 
 	fs := filesystem.New(conf.NodeAddr)
 	hasher := hasher.New()
-	router := router.New(fs, hasher)
+	counter := router.NewCounter()
+	routerFetcher := server.NewRouterFetcher(fs, hasher, counter)
 
 	log.Printf("Starting server on %s...", conf.Addr)
-	addr, err := server.Start(conf.Addr, router, fs)
+	addr, err := server.Start(conf.Addr, routerFetcher, fs)
 	if err != nil {
 		log.Fatalf("Failed to start server: %s", err)
 	}
 	log.Printf("Started server on %s.", addr)
 
 	log.Printf("Starting intra server on %s...", conf.IntraAddr)
-	intraAddr, err := intra.Start(conf.IntraAddr, router)
+	intraAddr, err := intra.Start(conf.IntraAddr, counter)
 	if err != nil {
 		log.Fatalf("Failed to start intra server: %s", err)
 	}

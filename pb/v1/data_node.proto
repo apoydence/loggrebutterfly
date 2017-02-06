@@ -3,7 +3,7 @@ syntax = "proto3";
 package loggrebutterfly;
 
 service DataNode {
-  rpc Write(WriteInfo) returns (WriteResponse) {}
+  rpc Write(stream WriteInfo) returns (WriteResponse) {}
   rpc Read(ReadInfo) returns (stream ReadData) {}
 }
 

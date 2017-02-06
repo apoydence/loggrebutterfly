@@ -98,8 +98,12 @@ func TestDataNode(t *testing.T) {
 
 		f := func() bool {
 			ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
-			_, err = t.client.Write(ctx, &pb.WriteInfo{Payload: data})
-			return err == nil
+			sender, err := t.client.Write(ctx)
+			if err != nil {
+				return false
+			}
+
+			return sender.Send(&pb.WriteInfo{Payload: data}) == nil
 		}
 		Expect(t, f).To(ViaPolling(BeTrue()))
 
@@ -108,7 +112,11 @@ func TestDataNode(t *testing.T) {
 			var err error
 			ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
 			resp, err = t.intraClient.ReadMetrics(ctx, &intra.ReadMetricsInfo{t.fileName})
-			return err == nil
+			if err != nil {
+				return false
+			}
+
+			return resp.WriteCount != 0
 		}
 
 		Expect(t, f).To(ViaPolling(BeTrue()))

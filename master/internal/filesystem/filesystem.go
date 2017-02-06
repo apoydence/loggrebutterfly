@@ -27,12 +27,6 @@ func (f *FileSystem) Create(file string) (err error) {
 	return err
 }
 
-func (f *FileSystem) ReadOnly(file string) (err error) {
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
-	_, err = f.schedClient.ReadOnly(ctx, &pb.ReadOnlyInfo{Name: file})
-	return err
-}
-
 func (f *FileSystem) List() (files []string, err error) {
 	m, err := f.Routes()
 	if err != nil {

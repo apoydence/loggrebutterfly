@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
 
 	"github.com/apoydence/eachers/testhelpers"
 	"github.com/apoydence/loggrebutterfly/client/internal/filesystem"
@@ -24,6 +25,7 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 	if !testing.Verbose() {
 		log.SetOutput(ioutil.Discard)
+		grpclog.SetLogger(log.New(ioutil.Discard, "", 0))
 	}
 
 	os.Exit(m.Run())
@@ -32,10 +34,13 @@ func TestMain(m *testing.M) {
 type TFS struct {
 	*testing.T
 	dataNodeAddrs       []string
-	mockMasterServer    *mockMasterServer
 	mockDataNodeServers []*mockDataNodeServer
+	dataNodeClients     []pb.DataNodeClient
+	mockRouteCache      *mockRouteCache
 	fs                  *filesystem.FileSystem
 }
+
+// TODO: These tests should not require an actual gRPC server
 
 func TestFileSystemList(t *testing.T) {
 	t.Parallel()
@@ -44,9 +49,12 @@ func TestFileSystemList(t *testing.T) {
 
 	setup(o)
 
-	o.Group("master does not return an error", func() {
+	o.Group("cache returns a client", func() {
 		o.BeforeEach(func(t TFS) TFS {
-			writeRoutes(t)
+			t.mockRouteCache.ListOutput.Ret0 <- []string{
+				"some-name-a",
+				"some-name-b",
+			}
 			return t
 		})
 
@@ -54,22 +62,10 @@ func TestFileSystemList(t *testing.T) {
 			list, err := t.fs.List()
 			Expect(t, err == nil).To(BeTrue())
 			Expect(t, list).To(HaveLen(2))
-			Expect(t, list[0]).To(Or(
-				Equal("some-name-a"),
-				Equal("some-name-b"),
+			Expect(t, list).To(Contain(
+				"some-name-a",
+				"some-name-b",
 			))
-			Expect(t, list[1]).To(Or(
-				Equal("some-name-a"),
-				Equal("some-name-b"),
-			))
-			Expect(t, list[0]).To(Not(Equal(list[1])))
-		})
-
-		o.Spec("it does not query the master each time", func(t TFS) {
-			t.fs.List()
-			t.fs.List()
-
-			Expect(t, t.mockMasterServer.RoutesCalled).To(Always(HaveLen(1)))
 		})
 	})
 }
@@ -81,37 +77,37 @@ func TestFileSystemWriter(t *testing.T) {
 
 	setup(o)
 
-	o.Group("master does not return an error", func() {
+	o.Group("cache returns a client", func() {
 		o.BeforeEach(func(t TFS) TFS {
-			writeRoutes(t)
+			close(t.mockRouteCache.FetchRouteOutput.Addr)
+			testhelpers.AlwaysReturn(t.mockRouteCache.FetchRouteOutput.Client, t.dataNodeClients[1])
+			t.mockRouteCache.ListOutput.Ret0 <- []string{
+				"some-name-a",
+				"some-name-b",
+			}
 			return t
 		})
 
 		o.Group("data node does not return an error", func() {
-			o.BeforeEach(func(t TFS) TFS {
-				testhelpers.AlwaysReturn(t.mockDataNodeServers[1].WriteOutput.Ret0, new(pb.WriteResponse))
-				close(t.mockDataNodeServers[1].WriteOutput.Ret1)
-				return t
-			})
-
 			o.Spec("it writes to the correct data node", func(t TFS) {
 				writer, err := t.fs.Writer("some-name-b")
 				Expect(t, err == nil).To(BeTrue())
 				err = writer.Write([]byte("some-data"))
 				Expect(t, err == nil).To(BeTrue())
 
-				var info *pb.WriteInfo
-				Expect(t, t.mockDataNodeServers[1].WriteInput.Arg1).To(ViaPolling(
-					Chain(Receive(), Fetch(&info)),
+				var rx pb.DataNode_WriteServer
+				Expect(t, t.mockDataNodeServers[1].WriteInput.Arg0).To(ViaPolling(
+					Chain(Receive(), Fetch(&rx)),
 				))
-				Expect(t, info.Payload).To(Equal([]byte("some-data")))
+				data, err := rx.Recv()
+				Expect(t, err == nil).To(BeTrue())
+				Expect(t, data.Payload).To(Equal([]byte("some-data")))
 			})
 		})
 
 		o.Group("when the data node returns an error", func() {
 			o.BeforeEach(func(t TFS) TFS {
-				close(t.mockDataNodeServers[1].WriteOutput.Ret0)
-				testhelpers.AlwaysReturn(t.mockDataNodeServers[1].WriteOutput.Ret1, fmt.Errorf("some-error"))
+				testhelpers.AlwaysReturn(t.mockDataNodeServers[1].WriteOutput.Ret0, fmt.Errorf("some-error"))
 				return t
 			})
 
@@ -119,35 +115,23 @@ func TestFileSystemWriter(t *testing.T) {
 				writer, err := t.fs.Writer("some-name-b")
 				Expect(t, err == nil).To(BeTrue())
 
-				err = writer.Write([]byte("some-data"))
-				Expect(t, err == nil).To(BeFalse())
+				f := func() bool {
+					return writer.Write([]byte("some-data")) != nil
+				}
+				Expect(t, f).To(ViaPolling(BeTrue()))
 			})
+		})
+	})
 
-			o.Spec("it does not write to the data node once it is dead", func(t TFS) {
-				writer, err := t.fs.Writer("some-name-b")
-				Expect(t, err == nil).To(BeTrue())
-
-				err = writer.Write([]byte("some-data"))
-				Expect(t, err == nil).To(BeFalse())
-
-				err = writer.Write([]byte("some-data"))
-				Expect(t, err == nil).To(BeFalse())
-
-				Expect(t, t.mockDataNodeServers[1].WriteCalled).To(Always(HaveLen(1)))
-			})
-
-			o.Spec("it refreshes the routes after an error", func(t TFS) {
-				writer, err := t.fs.Writer("some-name-b")
-				Expect(t, err == nil).To(BeTrue())
-
-				err = writer.Write([]byte("some-data"))
-				Expect(t, err == nil).To(BeFalse())
-
-				writer, err = t.fs.Writer("some-name-b")
-				Expect(t, err == nil).To(BeTrue())
-
-				Expect(t, t.mockMasterServer.RoutesCalled).To(ViaPolling(HaveLen(2)))
-			})
+	o.Group("cache does not return a client", func() {
+		o.BeforeEach(func(t TFS) TFS {
+			close(t.mockRouteCache.FetchRouteOutput.Addr)
+			close(t.mockRouteCache.FetchRouteOutput.Client)
+			t.mockRouteCache.ListOutput.Ret0 <- []string{
+				"some-name-a",
+				"some-name-b",
+			}
+			return t
 		})
 
 		o.Spec("it returns an error for an unknown file", func(t TFS) {
@@ -164,14 +148,19 @@ func TestFileSystemReader(t *testing.T) {
 
 	setup(o)
 
-	o.Group("when data node returns an error", func() {
+	o.Group("when data node returns an EOF", func() {
 		o.BeforeEach(func(t TFS) TFS {
-			writeRoutes(t)
+			close(t.mockRouteCache.FetchRouteOutput.Addr)
+			testhelpers.AlwaysReturn(t.mockRouteCache.FetchRouteOutput.Client, t.dataNodeClients[1])
+			// t.mockRouteCache.ListOutput.Ret0 <- []string{
+			// 	"some-name-a",
+			// 	"some-name-b",
+			// }
 			testhelpers.AlwaysReturn(t.mockDataNodeServers[1].ReadOutput.Ret0, io.EOF)
 			return t
 		})
 
-		o.Spec("it converts it to an io.EOF", func(t TFS) {
+		o.Spec("it converts it to an io EOF", func(t TFS) {
 			reader, err := t.fs.Reader("some-name-b")
 			Expect(t, err == nil).To(BeTrue())
 
@@ -182,7 +171,8 @@ func TestFileSystemReader(t *testing.T) {
 
 	o.Group("when data node does not return an error", func() {
 		o.BeforeEach(func(t TFS) TFS {
-			writeRoutes(t)
+			close(t.mockRouteCache.FetchRouteOutput.Addr)
+			testhelpers.AlwaysReturn(t.mockRouteCache.FetchRouteOutput.Client, t.dataNodeClients[1])
 			return t
 		})
 
@@ -212,54 +202,21 @@ func TestFileSystemReader(t *testing.T) {
 	})
 }
 
-func writeRoutes(t TFS) {
-	testhelpers.AlwaysReturn(t.mockMasterServer.RoutesOutput.Ret0, &pb.RoutesResponse{
-		Routes: []*pb.RouteInfo{
-			{
-				Name:   "some-name-a",
-				Leader: t.dataNodeAddrs[0],
-			},
-			{
-				Name:   "some-name-b",
-				Leader: t.dataNodeAddrs[1],
-			},
-		},
-	})
-	close(t.mockMasterServer.RoutesOutput.Ret1)
-}
-
 func setup(o *onpar.Onpar) {
 	o.BeforeEach(func(t *testing.T) TFS {
-		masterAddr, mockMasterServer := startMockMaster()
 		dataNodeAddrA, mockDataNodeServerA := startMockDataNode()
 		dataNodeAddrB, mockDataNodeServerB := startMockDataNode()
+		mockRouteCache := newMockRouteCache()
 
 		return TFS{
 			T:                   t,
-			mockMasterServer:    mockMasterServer,
 			mockDataNodeServers: []*mockDataNodeServer{mockDataNodeServerA, mockDataNodeServerB},
 			dataNodeAddrs:       []string{dataNodeAddrA, dataNodeAddrB},
-			fs:                  filesystem.New(masterAddr),
+			mockRouteCache:      mockRouteCache,
+			dataNodeClients:     []pb.DataNodeClient{fetchDataNodeClient(dataNodeAddrA), fetchDataNodeClient(dataNodeAddrB)},
+			fs:                  filesystem.New(mockRouteCache),
 		}
 	})
-}
-
-func startMockMaster() (string, *mockMasterServer) {
-	mockMasterServer := newMockMasterServer()
-	lis, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		panic(err)
-	}
-	s := grpc.NewServer()
-	pb.RegisterMasterServer(s, mockMasterServer)
-
-	go func() {
-		if err := s.Serve(lis); err != nil {
-			panic(err)
-		}
-	}()
-
-	return lis.Addr().String(), mockMasterServer
 }
 
 func startMockDataNode() (string, *mockDataNodeServer) {
@@ -278,4 +235,12 @@ func startMockDataNode() (string, *mockDataNodeServer) {
 	}()
 
 	return lis.Addr().String(), mockDataNodeServer
+}
+
+func fetchDataNodeClient(addr string) pb.DataNodeClient {
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	return pb.NewDataNodeClient(conn)
 }

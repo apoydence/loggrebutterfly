@@ -1,6 +1,7 @@
 package intra
 
 import (
+	"encoding/json"
 	"log"
 	"net"
 
@@ -12,7 +13,7 @@ import (
 )
 
 type MetricsReader interface {
-	Metrics(file string) (metric router.Metric)
+	Metrics(rn router.RangeName) (metric router.Metric)
 }
 
 type IntraServer struct {
@@ -40,7 +41,12 @@ func Start(addr string, metricsReader MetricsReader) (actualAddr string, err err
 }
 
 func (s *IntraServer) ReadMetrics(ctx context.Context, in *intra.ReadMetricsInfo) (*intra.ReadMetricsResponse, error) {
-	metrics := s.metricsReader.Metrics(in.File)
+	var rn router.RangeName
+	if err := json.Unmarshal([]byte(in.File), &rn); err != nil {
+		return nil, err
+	}
+
+	metrics := s.metricsReader.Metrics(rn)
 	return &intra.ReadMetricsResponse{
 		WriteCount: metrics.WriteCount,
 		ErrCount:   metrics.ErrCount,

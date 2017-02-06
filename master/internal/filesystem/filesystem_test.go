@@ -63,33 +63,6 @@ func TestFileSystemCreate(t *testing.T) {
 	})
 }
 
-func TestFileSystemReadOnly(t *testing.T) {
-	t.Parallel()
-	o := onpar.New()
-	defer o.Run(t)
-
-	setup(o)
-
-	o.Group("when scheduler does not return an error", func() {
-		o.BeforeEach(func(t TF) TF {
-			testhelpers.AlwaysReturn(t.mockSchedulerServer.ReadOnlyOutput.Ret0, new(pb.ReadOnlyResponse))
-			close(t.mockSchedulerServer.ReadOnlyOutput.Ret1)
-			return t
-		})
-
-		o.Spec("it instructs the scheduler to set the buffer to ReadOnly", func(t TF) {
-			err := t.fs.ReadOnly("some-file")
-			Expect(t, err == nil).To(BeTrue())
-
-			Expect(t, t.mockSchedulerServer.ReadOnlyInput.Arg1).To(
-				Chain(Receive(), Equal(&pb.ReadOnlyInfo{
-					Name: "some-file",
-				})),
-			)
-		})
-	})
-}
-
 func TestFileSystemList(t *testing.T) {
 	t.Parallel()
 	o := onpar.New()

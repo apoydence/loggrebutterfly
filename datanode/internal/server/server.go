@@ -6,13 +6,11 @@ import (
 
 	pb "github.com/apoydence/loggrebutterfly/pb/v1"
 
-	"golang.org/x/net/context"
-
 	"google.golang.org/grpc"
 )
 
-type Writer interface {
-	Write(data []byte) (err error)
+type WriteFetcher interface {
+	Writer() (writer func(data []byte) (err error), err error)
 }
 
 type ReadFetcher interface {
@@ -20,11 +18,11 @@ type ReadFetcher interface {
 }
 
 type Server struct {
-	writer Writer
+	writer WriteFetcher
 	reader ReadFetcher
 }
 
-func Start(addr string, writer Writer, reader ReadFetcher) (actualAddr string, err error) {
+func Start(addr string, writer WriteFetcher, reader ReadFetcher) (actualAddr string, err error) {
 	s := &Server{
 		writer: writer,
 		reader: reader,
@@ -46,12 +44,22 @@ func Start(addr string, writer Writer, reader ReadFetcher) (actualAddr string, e
 	return lis.Addr().String(), nil
 }
 
-func (s *Server) Write(ctx context.Context, in *pb.WriteInfo) (*pb.WriteResponse, error) {
-	if err := s.writer.Write(in.Payload); err != nil {
-		return nil, err
+func (s *Server) Write(sender pb.DataNode_WriteServer) error {
+	w, err := s.writer.Writer()
+	if err != nil {
+		return err
 	}
 
-	return new(pb.WriteResponse), nil
+	for {
+		info, err := sender.Recv()
+		if err != nil {
+			return err
+		}
+
+		if err := w(info.Payload); err != nil {
+			return err
+		}
+	}
 }
 
 func (s *Server) Read(info *pb.ReadInfo, server pb.DataNode_ReadServer) error {

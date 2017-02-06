@@ -21,15 +21,6 @@ type mockSchedulerServer struct {
 		Ret0 chan *pb.CreateResponse
 		Ret1 chan error
 	}
-	ReadOnlyCalled chan bool
-	ReadOnlyInput  struct {
-		Arg0 chan context.Context
-		Arg1 chan *pb.ReadOnlyInfo
-	}
-	ReadOnlyOutput struct {
-		Ret0 chan *pb.ReadOnlyResponse
-		Ret1 chan error
-	}
 	ListClusterInfoCalled chan bool
 	ListClusterInfoInput  struct {
 		Arg0 chan context.Context
@@ -48,11 +39,6 @@ func newMockSchedulerServer() *mockSchedulerServer {
 	m.CreateInput.Arg1 = make(chan *pb.CreateInfo, 100)
 	m.CreateOutput.Ret0 = make(chan *pb.CreateResponse, 100)
 	m.CreateOutput.Ret1 = make(chan error, 100)
-	m.ReadOnlyCalled = make(chan bool, 100)
-	m.ReadOnlyInput.Arg0 = make(chan context.Context, 100)
-	m.ReadOnlyInput.Arg1 = make(chan *pb.ReadOnlyInfo, 100)
-	m.ReadOnlyOutput.Ret0 = make(chan *pb.ReadOnlyResponse, 100)
-	m.ReadOnlyOutput.Ret1 = make(chan error, 100)
 	m.ListClusterInfoCalled = make(chan bool, 100)
 	m.ListClusterInfoInput.Arg0 = make(chan context.Context, 100)
 	m.ListClusterInfoInput.Arg1 = make(chan *pb.ListInfo, 100)
@@ -65,12 +51,6 @@ func (m *mockSchedulerServer) Create(arg0 context.Context, arg1 *pb.CreateInfo) 
 	m.CreateInput.Arg0 <- arg0
 	m.CreateInput.Arg1 <- arg1
 	return <-m.CreateOutput.Ret0, <-m.CreateOutput.Ret1
-}
-func (m *mockSchedulerServer) ReadOnly(arg0 context.Context, arg1 *pb.ReadOnlyInfo) (*pb.ReadOnlyResponse, error) {
-	m.ReadOnlyCalled <- true
-	m.ReadOnlyInput.Arg0 <- arg0
-	m.ReadOnlyInput.Arg1 <- arg1
-	return <-m.ReadOnlyOutput.Ret0, <-m.ReadOnlyOutput.Ret1
 }
 func (m *mockSchedulerServer) ListClusterInfo(arg0 context.Context, arg1 *pb.ListInfo) (*pb.ListResponse, error) {
 	m.ListClusterInfoCalled <- true

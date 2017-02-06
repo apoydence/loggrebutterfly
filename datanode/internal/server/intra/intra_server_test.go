@@ -60,7 +60,7 @@ func TestIntra(t *testing.T) {
 		}
 
 		resp, err := t.client.ReadMetrics(context.Background(), &pb.ReadMetricsInfo{
-			File: "some-file",
+			File: `{"Term":99}`,
 		})
 		Expect(t, err == nil).To(BeTrue())
 		Expect(t, resp.WriteCount).To(Equal(uint64(99)))

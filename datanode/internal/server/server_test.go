@@ -13,6 +13,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/apoydence/eachers/testhelpers"
 	"github.com/apoydence/loggrebutterfly/datanode/internal/server"
 	pb "github.com/apoydence/loggrebutterfly/pb/v1"
 
@@ -34,8 +35,10 @@ type TS struct {
 	*testing.T
 	client pb.DataNodeClient
 
-	mockWriter      *mockWriter
-	mockReadFetcher *mockReadFetcher
+	data             chan []byte
+	errs             chan error
+	mockWriteFetcher *mockWriteFetcher
+	mockReadFetcher  *mockReadFetcher
 }
 
 func TestServer(t *testing.T) {
@@ -44,30 +47,44 @@ func TestServer(t *testing.T) {
 	defer o.Run(t)
 
 	o.BeforeEach(func(t *testing.T) TS {
-		mockWriter := newMockWriter()
+		mockWriteFetcher := newMockWriteFetcher()
 		mockReadFetcher := newMockReadFetcher()
-		close(mockWriter.WriteOutput.Err)
 
+		data := make(chan []byte, 100)
+		errs := make(chan error, 100)
+		writer := func(d []byte) error {
+			data <- d
+			return <-errs
+		}
+		testhelpers.AlwaysReturn(mockWriteFetcher.WriterOutput.Writer, writer)
+
+		close(mockWriteFetcher.WriterOutput.Err)
 		close(mockReadFetcher.ReaderOutput.Err)
 
-		addr, err := server.Start("127.0.0.1:0", mockWriter, mockReadFetcher)
+		addr, err := server.Start("127.0.0.1:0", mockWriteFetcher, mockReadFetcher)
 		Expect(t, err == nil).To(BeTrue())
 
 		return TS{
-			T:               t,
-			client:          fetchClient(addr),
-			mockWriter:      mockWriter,
-			mockReadFetcher: mockReadFetcher,
+			T:                t,
+			client:           fetchClient(addr),
+			mockWriteFetcher: mockWriteFetcher,
+			mockReadFetcher:  mockReadFetcher,
+			data:             data,
+			errs:             errs,
 		}
 	})
 
 	o.Spec("it writes to the writer", func(t TS) {
-		_, err := t.client.Write(context.Background(), &pb.WriteInfo{
+		t.errs <- nil
+		sender, err := t.client.Write(context.Background())
+		Expect(t, err == nil).To(BeTrue())
+
+		err = sender.Send(&pb.WriteInfo{
 			Payload: []byte("some-data"),
 		})
-
 		Expect(t, err == nil).To(BeTrue())
-		Expect(t, t.mockWriter.WriteInput.Data).To(ViaPolling(
+
+		Expect(t, t.data).To(ViaPolling(
 			Chain(Receive(), Equal([]byte("some-data"))),
 		))
 	})

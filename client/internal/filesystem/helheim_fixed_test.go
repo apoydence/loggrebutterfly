@@ -13,12 +13,10 @@ import (
 type mockDataNodeServer struct {
 	WriteCalled chan bool
 	WriteInput  struct {
-		Arg0 chan context.Context
-		Arg1 chan *pb.WriteInfo
+		Arg0 chan pb.DataNode_WriteServer
 	}
 	WriteOutput struct {
-		Ret0 chan *pb.WriteResponse
-		Ret1 chan error
+		Ret0 chan error
 	}
 	ReadCalled chan bool
 	ReadInput  struct {
@@ -33,21 +31,18 @@ type mockDataNodeServer struct {
 func newMockDataNodeServer() *mockDataNodeServer {
 	m := &mockDataNodeServer{}
 	m.WriteCalled = make(chan bool, 100)
-	m.WriteInput.Arg0 = make(chan context.Context, 100)
-	m.WriteInput.Arg1 = make(chan *pb.WriteInfo, 100)
-	m.WriteOutput.Ret0 = make(chan *pb.WriteResponse, 100)
-	m.WriteOutput.Ret1 = make(chan error, 100)
+	m.WriteInput.Arg0 = make(chan pb.DataNode_WriteServer, 100)
+	m.WriteOutput.Ret0 = make(chan error, 100)
 	m.ReadCalled = make(chan bool, 100)
 	m.ReadInput.Arg0 = make(chan *pb.ReadInfo, 100)
 	m.ReadInput.Arg1 = make(chan pb.DataNode_ReadServer, 100)
 	m.ReadOutput.Ret0 = make(chan error, 100)
 	return m
 }
-func (m *mockDataNodeServer) Write(arg0 context.Context, arg1 *pb.WriteInfo) (*pb.WriteResponse, error) {
+func (m *mockDataNodeServer) Write(arg0 pb.DataNode_WriteServer) error {
 	m.WriteCalled <- true
 	m.WriteInput.Arg0 <- arg0
-	m.WriteInput.Arg1 <- arg1
-	return <-m.WriteOutput.Ret0, <-m.WriteOutput.Ret1
+	return <-m.WriteOutput.Ret0
 }
 func (m *mockDataNodeServer) Read(arg0 *pb.ReadInfo, arg1 pb.DataNode_ReadServer) error {
 	m.ReadCalled <- true
@@ -82,4 +77,44 @@ func (m *mockMasterServer) Routes(arg0 context.Context, arg1 *pb.RoutesInfo) (*p
 	m.RoutesInput.Arg0 <- arg0
 	m.RoutesInput.Arg1 <- arg1
 	return <-m.RoutesOutput.Ret0, <-m.RoutesOutput.Ret1
+}
+
+type mockRouteCache struct {
+	ListCalled chan bool
+	ListOutput struct {
+		Ret0 chan []string
+	}
+	FetchRouteCalled chan bool
+	FetchRouteInput  struct {
+		Name chan string
+	}
+	FetchRouteOutput struct {
+		Client chan pb.DataNodeClient
+		Addr   chan string
+	}
+	ResetCalled chan bool
+}
+
+func newMockRouteCache() *mockRouteCache {
+	m := &mockRouteCache{}
+	m.ListCalled = make(chan bool, 100)
+	m.ListOutput.Ret0 = make(chan []string, 100)
+	m.FetchRouteCalled = make(chan bool, 100)
+	m.FetchRouteInput.Name = make(chan string, 100)
+	m.FetchRouteOutput.Client = make(chan pb.DataNodeClient, 100)
+	m.FetchRouteOutput.Addr = make(chan string, 100)
+	m.ResetCalled = make(chan bool, 100)
+	return m
+}
+func (m *mockRouteCache) List() []string {
+	m.ListCalled <- true
+	return <-m.ListOutput.Ret0
+}
+func (m *mockRouteCache) FetchRoute(name string) (client pb.DataNodeClient, addr string) {
+	m.FetchRouteCalled <- true
+	m.FetchRouteInput.Name <- name
+	return <-m.FetchRouteOutput.Client, <-m.FetchRouteOutput.Addr
+}
+func (m *mockRouteCache) Reset() {
+	m.ResetCalled <- true
 }
