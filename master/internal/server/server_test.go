@@ -59,7 +59,7 @@ func TestServer(t *testing.T) {
 			"some-route-b": "some-leader",
 		}
 
-		ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(time.Second))
+		ctx, _ := context.WithTimeout(context.Background(), time.Second)
 		resp, err := t.masterClient.Routes(ctx, new(pb.RoutesInfo))
 		Expect(t, err == nil).To(BeTrue())
 		Expect(t, resp.Routes).To(HaveLen(2))

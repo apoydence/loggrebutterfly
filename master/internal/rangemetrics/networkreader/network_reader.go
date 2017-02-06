@@ -28,7 +28,7 @@ func (r *NetworkReader) ReadMetrics(addr, file string) (metric router.Metric, er
 		return router.Metric{}, err
 	}
 
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(3*time.Second))
+	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
 	resp, err := client.ReadMetrics(ctx, &intra.ReadMetricsInfo{File: file})
 	if err != nil {
 		return router.Metric{}, err

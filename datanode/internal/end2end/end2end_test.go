@@ -97,7 +97,7 @@ func TestDataNode(t *testing.T) {
 		Expect(t, err == nil).To(BeTrue())
 
 		f := func() bool {
-			ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 			sender, err := t.client.Write(ctx)
 			if err != nil {
 				return false
@@ -110,7 +110,7 @@ func TestDataNode(t *testing.T) {
 		var resp *intra.ReadMetricsResponse
 		f = func() bool {
 			var err error
-			ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 			resp, err = t.intraClient.ReadMetrics(ctx, &intra.ReadMetricsInfo{t.fileName})
 			if err != nil {
 				return false

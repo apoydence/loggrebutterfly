@@ -21,7 +21,7 @@ func New(addr string) *FileSystem {
 }
 
 func (f *FileSystem) List() (file []string, err error) {
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	resp, err := f.client.ListClusters(ctx, new(pb.ListClustersInfo))
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (f *FileSystem) List() (file []string, err error) {
 }
 
 func (f *FileSystem) Writer(name string) (writer router.Writer, err error) {
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	sender, err := f.client.Write(ctx)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (f *FileSystem) Writer(name string) (writer router.Writer, err error) {
 }
 
 func (f *FileSystem) Reader(name string) (reader func() ([]byte, error), err error) {
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	rx, err := f.client.Read(ctx, &pb.BufferInfo{Name: name})
 	if err != nil {
 		return nil, err

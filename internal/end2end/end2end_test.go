@@ -77,7 +77,7 @@ func TestMaster(t *testing.T) {
 		var resp *pb.RoutesResponse
 		f := func() bool {
 			var err error
-			ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(3*time.Second))
+			ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
 			resp, err = t.client.Routes(ctx, new(pb.RoutesInfo))
 			if err != nil {
 				return false

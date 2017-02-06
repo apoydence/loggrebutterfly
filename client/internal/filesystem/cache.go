@@ -101,7 +101,7 @@ func (c *Cache) setupRoutes() error {
 }
 
 func (c *Cache) list() (files []*pb.RouteInfo, err error) {
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	resp, err := c.masterClient.Routes(ctx, new(pb.RoutesInfo))
 	if err != nil {
 		return nil, err

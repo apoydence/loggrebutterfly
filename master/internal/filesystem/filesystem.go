@@ -22,7 +22,7 @@ func New(addr string, nodeAddrConverter map[string]string) *FileSystem {
 }
 
 func (f *FileSystem) Create(file string) (err error) {
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	_, err = f.schedClient.Create(ctx, &pb.CreateInfo{Name: file})
 	return err
 }
@@ -42,7 +42,7 @@ func (f *FileSystem) List() (files []string, err error) {
 
 func (f *FileSystem) Routes() (routes map[string]string, err error) {
 	routes = make(map[string]string)
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	resp, err := f.schedClient.ListClusterInfo(ctx, new(pb.ListInfo))
 	if err != nil {
 		log.Printf("Failed to list cluster info: %s", err)

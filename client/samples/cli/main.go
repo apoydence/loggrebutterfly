@@ -146,7 +146,7 @@ func list() {
 
 	masterClient := setupMasterClient()
 
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	resp, err := masterClient.Routes(ctx, new(pb.RoutesInfo))
 	if err != nil {
 		log.Fatal(err)
