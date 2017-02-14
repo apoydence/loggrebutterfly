@@ -16,10 +16,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 
-	"github.com/apoydence/loggrebutterfly/client"
-	"github.com/apoydence/loggrebutterfly/internal/end2end"
 	v2 "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
 	pb "github.com/apoydence/loggrebutterfly/api/v1"
+	"github.com/apoydence/loggrebutterfly/client"
+	"github.com/apoydence/loggrebutterfly/internal/end2end"
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"
@@ -28,7 +28,9 @@ import (
 )
 
 var (
-	masterPort int
+	masterPort   int
+	schedPort    int
+	analystPorts []int
 )
 
 func TestMain(m *testing.M) {
@@ -100,6 +102,7 @@ func TestMaster(t *testing.T) {
 
 		e := &v2.Envelope{
 			SourceUuid: "some-id",
+			Timestamp:  99,
 		}
 
 		reader := client.ReadFrom("some-id")
@@ -119,6 +122,26 @@ func TestMaster(t *testing.T) {
 			Matcher:  BeTrue(),
 		})
 		Expect(t, rxEnvelope).To(Equal(e))
+
+		analyst := fetchAnalystClient(analystPorts[0])
+		var queryResp *pb.QueryResponse
+		f = func() bool {
+			var err error
+			queryResp, err = analyst.Query(context.Background(), &pb.QueryInfo{
+				SourceUuid: "some-id",
+				TimeRange: &pb.TimeRange{
+					Start: 99,
+					End:   10000,
+				},
+			})
+
+			return err == nil
+		}
+		Expect(t, f).To(ViaPollingMatcher{
+			Duration: 3 * time.Second,
+			Matcher:  BeTrue(),
+		})
+		Expect(t, queryResp.Envelopes).To(Not(HaveLen(0)))
 	})
 }
 
@@ -128,7 +151,10 @@ func setup() []*os.Process {
 		dataNodeIntraPorts []int
 		nodePorts          []int
 		nodeIntraPorts     []int
-		ps                 []*os.Process
+
+		analystIntraPorts []int
+
+		ps []*os.Process
 	)
 
 	for i := 0; i < 3; i++ {
@@ -141,8 +167,18 @@ func setup() []*os.Process {
 	}
 
 	var masterPs []*os.Process
-	masterPort, masterPs = startMaster(dataNodeIntraPorts, dataNodePorts, nodePorts, nodeIntraPorts)
+	masterPort, schedPort, masterPs = startMaster(dataNodeIntraPorts, dataNodePorts, nodePorts, nodeIntraPorts)
 	ps = append(ps, masterPs...)
+
+	for i := 0; i < 3; i++ {
+		analystIntraPorts = append(analystIntraPorts, end2end.AvailablePort())
+	}
+
+	for i := 0; i < 3; i++ {
+		port, p := startAnalyst(analystIntraPorts[i], nodePorts[i], schedPort, analystIntraPorts, nodeIntraPorts)
+		analystPorts = append(analystPorts, port)
+		ps = append(ps, p)
+	}
 
 	return ps
 }
@@ -155,7 +191,15 @@ func fetchMasterClient(port int) pb.MasterClient {
 	return pb.NewMasterClient(conn)
 }
 
-func startMaster(routerPorts, extRouterPorts, nodePorts, nodeIntraPorts []int) (port int, ps []*os.Process) {
+func fetchAnalystClient(port int) pb.AnalystClient {
+	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", port), grpc.WithInsecure())
+	if err != nil {
+		return nil
+	}
+	return pb.NewAnalystClient(conn)
+}
+
+func startMaster(routerPorts, extRouterPorts, nodePorts, nodeIntraPorts []int) (port, schedPort int, ps []*os.Process) {
 	schedPort, schedPs := startTalariaScheduler(nodeIntraPorts)
 
 	port = end2end.AvailablePort()
@@ -179,15 +223,15 @@ func startMaster(routerPorts, extRouterPorts, nodePorts, nodeIntraPorts []int) (
 	}
 
 	if testing.Verbose() {
-		// command.Stdout = os.Stdout
-		// command.Stderr = os.Stderr
+		command.Stdout = os.Stdout
+		command.Stderr = os.Stderr
 	}
 
 	if err = command.Start(); err != nil {
 		panic(err)
 	}
 
-	return port, []*os.Process{command.Process, schedPs}
+	return port, schedPort, []*os.Process{command.Process, schedPs}
 }
 
 func startTalariaScheduler(nodePorts []int) (port int, ps *os.Process) {
@@ -254,6 +298,41 @@ func startDataNode() (port, intraPort, nodePort, intraNodePort int, ps []*os.Pro
 	}
 
 	return port, intraPort, nodePort, intraNodePort, []*os.Process{command.Process, nodePs}
+}
+
+func startAnalyst(
+	intraNodePort int,
+	talariaNodePort int,
+	talariaSchedPort int,
+	intraPorts []int,
+	talariaNodePorts []int,
+) (port int, ps *os.Process) {
+	nodePort := end2end.AvailablePort()
+	path, err := gexec.Build("github.com/apoydence/loggrebutterfly/analyst")
+	if err != nil {
+		panic(err)
+	}
+	command := exec.Command(path)
+	command.Env = []string{
+		fmt.Sprintf("ADDR=localhost:%d", nodePort),
+		fmt.Sprintf("INTRA_ADDR=localhost:%d", intraNodePort),
+		fmt.Sprintf("TALARIA_NODE_ADDR=localhost:%d", talariaNodePort),
+		fmt.Sprintf("TALARIA_SCHEDULER_ADDR=localhost:%d", talariaSchedPort),
+		fmt.Sprintf("TALARIA_NODE_LIST=%s", buildNodeURIs(talariaNodePorts)),
+		fmt.Sprintf("INTRA_ANALYST_LIST=%s", buildNodeURIs(intraPorts)),
+	}
+
+	if testing.Verbose() {
+		command.Stdout = os.Stdout
+		command.Stderr = os.Stderr
+	}
+
+	err = command.Start()
+	if err != nil {
+		panic(err)
+	}
+
+	return nodePort, command.Process
 }
 
 func startTalariaNode() (int, int, *os.Process) {
