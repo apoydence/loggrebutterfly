@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net"
+	"net/http"
 
 	"google.golang.org/grpc"
 
@@ -39,7 +40,10 @@ func main() {
 	exec := mapreduce.NewExecutor(algFetcher, fs)
 
 	go startIntraServer(intra.New(exec), conf.IntraAddr)
-	startServer(server.New(mr), conf.Addr)
+	go startServer(server.New(mr), conf.Addr)
+
+	log.Printf("Starting pprof on %s.", conf.PprofAddr)
+	log.Println(http.ListenAndServe(conf.PprofAddr, nil))
 }
 
 func setupAlgorithmFetcher() *algorithms.Fetcher {
