@@ -43,7 +43,7 @@ func (f *FileSystem) Files(route string, ctx context.Context, meta []byte) (file
 }
 
 func (f *FileSystem) Reader(file string, ctx context.Context, meta []byte) (reader func() (data []byte, err error), err error) {
-	rx, err := f.nodeClient.Read(ctx, &talaria.BufferInfo{})
+	rx, err := f.nodeClient.Read(ctx, &talaria.BufferInfo{Name: file})
 	if err != nil {
 		return nil, err
 	}

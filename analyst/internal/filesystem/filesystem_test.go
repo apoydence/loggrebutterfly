@@ -149,6 +149,9 @@ func TestFileSystemReader(t *testing.T) {
 				data, err := reader()
 				Expect(t, err == nil).To(BeTrue())
 				Expect(t, data).To(Equal([]byte("some-data")))
+				Expect(t, t.mockNodeClient.ReadInput.In).To(
+					Chain(Receive(), Equal(&talaria.BufferInfo{Name: "some-file"})),
+				)
 			})
 		})
 
