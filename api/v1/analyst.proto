@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+import "github.com/apoydence/loggrebutterfly/api/loggregator/v2/envelope.proto";
+
+package loggrebutterfly;
+
+service Analyst{
+  rpc Query(QueryInfo) returns (QueryResponse) {}
+}
+
+message QueryInfo {
+  string source_uuid = 1;
+  TimeRange timeRange = 2;
+}
+
+// [start, end)
+message TimeRange {
+  int64 start = 1;
+  int64 end = 2;
+}
+
+message QueryResponse {
+  repeated loggregator.Envelope envelopes = 1;
+}

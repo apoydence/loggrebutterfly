@@ -2,22 +2,6 @@
 // source: data_node.proto
 // DO NOT EDIT!
 
-/*
-Package loggrebutterfly is a generated protocol buffer package.
-
-It is generated from these files:
-	data_node.proto
-	master.proto
-
-It has these top-level messages:
-	WriteInfo
-	WriteResponse
-	ReadInfo
-	ReadData
-	RoutesInfo
-	RoutesResponse
-	RouteInfo
-*/
 package loggrebutterfly
 
 import proto "github.com/golang/protobuf/proto"
@@ -34,12 +18,6 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the proto package it is being compiled against.
-// A compilation error at this line likely means your copy of the
-// proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
-
 type WriteInfo struct {
 	Payload []byte `protobuf:"bytes,1,opt,name=Payload,json=payload,proto3" json:"Payload,omitempty"`
 }
@@ -47,7 +25,7 @@ type WriteInfo struct {
 func (m *WriteInfo) Reset()                    { *m = WriteInfo{} }
 func (m *WriteInfo) String() string            { return proto.CompactTextString(m) }
 func (*WriteInfo) ProtoMessage()               {}
-func (*WriteInfo) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (*WriteInfo) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
 
 func (m *WriteInfo) GetPayload() []byte {
 	if m != nil {
@@ -62,7 +40,7 @@ type WriteResponse struct {
 func (m *WriteResponse) Reset()                    { *m = WriteResponse{} }
 func (m *WriteResponse) String() string            { return proto.CompactTextString(m) }
 func (*WriteResponse) ProtoMessage()               {}
-func (*WriteResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*WriteResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
 
 type ReadInfo struct {
 	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
@@ -71,7 +49,7 @@ type ReadInfo struct {
 func (m *ReadInfo) Reset()                    { *m = ReadInfo{} }
 func (m *ReadInfo) String() string            { return proto.CompactTextString(m) }
 func (*ReadInfo) ProtoMessage()               {}
-func (*ReadInfo) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (*ReadInfo) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{2} }
 
 func (m *ReadInfo) GetName() string {
 	if m != nil {
@@ -87,7 +65,7 @@ type ReadData struct {
 func (m *ReadData) Reset()                    { *m = ReadData{} }
 func (m *ReadData) String() string            { return proto.CompactTextString(m) }
 func (*ReadData) ProtoMessage()               {}
-func (*ReadData) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+func (*ReadData) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{3} }
 
 func (m *ReadData) GetPayload() []byte {
 	if m != nil {
@@ -269,9 +247,9 @@ var _DataNode_serviceDesc = grpc.ServiceDesc{
 	Metadata: "data_node.proto",
 }
 
-func init() { proto.RegisterFile("data_node.proto", fileDescriptor0) }
+func init() { proto.RegisterFile("data_node.proto", fileDescriptor1) }
 
-var fileDescriptor0 = []byte{
+var fileDescriptor1 = []byte{
 	// 202 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x4f, 0x49, 0x2c, 0x49,
 	0x8c, 0xcf, 0xcb, 0x4f, 0x49, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0xcf, 0xc9, 0x4f,

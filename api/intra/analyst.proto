@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package intra;
+
+service Analyst{
+  rpc Execute(ExecuteInfo) returns (ExecuteResponse) {}
+}
+
+message ExecuteInfo {
+  string file = 1;
+  string alg = 2;
+  bytes meta = 3;
+}
+
+message ExecuteResponse {
+  map<string,bytes> result = 1;
+}

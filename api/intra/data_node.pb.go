@@ -2,16 +2,6 @@
 // source: data_node.proto
 // DO NOT EDIT!
 
-/*
-Package intra is a generated protocol buffer package.
-
-It is generated from these files:
-	data_node.proto
-
-It has these top-level messages:
-	ReadMetricsInfo
-	ReadMetricsResponse
-*/
 package intra
 
 import proto "github.com/golang/protobuf/proto"
@@ -28,12 +18,6 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the proto package it is being compiled against.
-// A compilation error at this line likely means your copy of the
-// proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
-
 type ReadMetricsInfo struct {
 	File string `protobuf:"bytes,1,opt,name=file" json:"file,omitempty"`
 }
@@ -41,7 +25,7 @@ type ReadMetricsInfo struct {
 func (m *ReadMetricsInfo) Reset()                    { *m = ReadMetricsInfo{} }
 func (m *ReadMetricsInfo) String() string            { return proto.CompactTextString(m) }
 func (*ReadMetricsInfo) ProtoMessage()               {}
-func (*ReadMetricsInfo) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (*ReadMetricsInfo) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
 
 func (m *ReadMetricsInfo) GetFile() string {
 	if m != nil {
@@ -58,7 +42,7 @@ type ReadMetricsResponse struct {
 func (m *ReadMetricsResponse) Reset()                    { *m = ReadMetricsResponse{} }
 func (m *ReadMetricsResponse) String() string            { return proto.CompactTextString(m) }
 func (*ReadMetricsResponse) ProtoMessage()               {}
-func (*ReadMetricsResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*ReadMetricsResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
 
 func (m *ReadMetricsResponse) GetWriteCount() uint64 {
 	if m != nil {
@@ -151,9 +135,9 @@ var _DataNode_serviceDesc = grpc.ServiceDesc{
 	Metadata: "data_node.proto",
 }
 
-func init() { proto.RegisterFile("data_node.proto", fileDescriptor0) }
+func init() { proto.RegisterFile("data_node.proto", fileDescriptor1) }
 
-var fileDescriptor0 = []byte{
+var fileDescriptor1 = []byte{
 	// 172 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x4f, 0x49, 0x2c, 0x49,
 	0x8c, 0xcf, 0xcb, 0x4f, 0x49, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0xcd, 0xcc, 0x2b,

@@ -24,7 +24,7 @@ type RoutesInfo struct {
 func (m *RoutesInfo) Reset()                    { *m = RoutesInfo{} }
 func (m *RoutesInfo) String() string            { return proto.CompactTextString(m) }
 func (*RoutesInfo) ProtoMessage()               {}
-func (*RoutesInfo) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
+func (*RoutesInfo) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{0} }
 
 type RoutesResponse struct {
 	Routes []*RouteInfo `protobuf:"bytes,1,rep,name=routes" json:"routes,omitempty"`
@@ -33,7 +33,7 @@ type RoutesResponse struct {
 func (m *RoutesResponse) Reset()                    { *m = RoutesResponse{} }
 func (m *RoutesResponse) String() string            { return proto.CompactTextString(m) }
 func (*RoutesResponse) ProtoMessage()               {}
-func (*RoutesResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
+func (*RoutesResponse) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{1} }
 
 func (m *RoutesResponse) GetRoutes() []*RouteInfo {
 	if m != nil {
@@ -50,7 +50,7 @@ type RouteInfo struct {
 func (m *RouteInfo) Reset()                    { *m = RouteInfo{} }
 func (m *RouteInfo) String() string            { return proto.CompactTextString(m) }
 func (*RouteInfo) ProtoMessage()               {}
-func (*RouteInfo) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{2} }
+func (*RouteInfo) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{2} }
 
 func (m *RouteInfo) GetName() string {
 	if m != nil {
@@ -144,9 +144,9 @@ var _Master_serviceDesc = grpc.ServiceDesc{
 	Metadata: "master.proto",
 }
 
-func init() { proto.RegisterFile("master.proto", fileDescriptor1) }
+func init() { proto.RegisterFile("master.proto", fileDescriptor2) }
 
-var fileDescriptor1 = []byte{
+var fileDescriptor2 = []byte{
 	// 181 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0xc9, 0x4d, 0x2c, 0x2e,
 	0x49, 0x2d, 0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0xcf, 0xc9, 0x4f, 0x4f, 0x2f, 0x4a,
