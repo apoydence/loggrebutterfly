@@ -13,14 +13,14 @@ type Config struct {
 	TalariaSchedulerAddr string   `env:"TALARIA_SCHEDULER_ADDR,required"`
 	TalariaNodeList      []string `env:"TALARIA_NODE_LIST,required"`
 	IntraAnalystList     []string `env:"INTRA_ANALYST_LIST,required"`
-	PprofAddr             string   `env:"PPROF_ADDR"`
+	PprofAddr            string   `env:"PPROF_ADDR"`
 
 	ToAnalyst map[string]string
 }
 
 func Load() *Config {
 	conf := Config{
-		PprofAddr: "localhost:6063",
+		PprofAddr: "localhost:0",
 	}
 
 	if err := envstruct.Load(&conf); err != nil {
