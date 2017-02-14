@@ -76,7 +76,7 @@ func setupTalariaSchedulerClient(addr string) talaria.SchedulerClient {
 func startIntraServer(server *intra.Server, addr string) {
 	log.Printf("Starting intra server (addr=%s)...", addr)
 
-	lis, err := net.Listen("tcp", addr)
+	lis, err := net.Listen("tcp4", addr)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -90,7 +90,7 @@ func startIntraServer(server *intra.Server, addr string) {
 func startServer(server *server.Server, addr string) {
 	log.Printf("Starting server (addr=%s)...", addr)
 
-	lis, err := net.Listen("tcp", addr)
+	lis, err := net.Listen("tcp4", addr)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
