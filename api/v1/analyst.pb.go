@@ -49,7 +49,7 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 type QueryInfo struct {
-	SourceUuid string     `protobuf:"bytes,1,opt,name=source_uuid,json=sourceUuid" json:"source_uuid,omitempty"`
+	SourceId string     `protobuf:"bytes,1,opt,name=source_uuid,json=sourceUuid" json:"source_uuid,omitempty"`
 	TimeRange  *TimeRange `protobuf:"bytes,2,opt,name=timeRange" json:"timeRange,omitempty"`
 }
 
@@ -58,9 +58,9 @@ func (m *QueryInfo) String() string            { return proto.CompactTextString(
 func (*QueryInfo) ProtoMessage()               {}
 func (*QueryInfo) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *QueryInfo) GetSourceUuid() string {
+func (m *QueryInfo) GetSourceId() string {
 	if m != nil {
-		return m.SourceUuid
+		return m.SourceId
 	}
 	return ""
 }

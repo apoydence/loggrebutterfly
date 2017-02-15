@@ -43,15 +43,15 @@ func TestHasher(t *testing.T) {
 	})
 
 	o.Spec("returns the same hash for an envelope", func(t TH) {
-		eA := &v2.Envelope{SourceUuid: "some-id"}
+		eA := &v2.Envelope{SourceId: "some-id"}
 		dataA, err := proto.Marshal(eA)
 		Expect(t, err == nil).To(BeTrue())
 
-		eB := &v2.Envelope{SourceUuid: "some-id"}
+		eB := &v2.Envelope{SourceId: "some-id"}
 		dataB, err := proto.Marshal(eB)
 		Expect(t, err == nil).To(BeTrue())
 
-		eC := &v2.Envelope{SourceUuid: "some-other-id"}
+		eC := &v2.Envelope{SourceId: "some-other-id"}
 		dataC, err := proto.Marshal(eC)
 		Expect(t, err == nil).To(BeTrue())
 

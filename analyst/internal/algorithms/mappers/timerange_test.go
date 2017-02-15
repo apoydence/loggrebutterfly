@@ -37,7 +37,7 @@ func TestTimerange(t *testing.T) {
 
 	o.BeforeEach(func(t *testing.T) TTR {
 		req := &v1.QueryInfo{
-			SourceUuid: "some-id",
+			SourceId: "some-id",
 			TimeRange: &v1.TimeRange{
 				Start: 99,
 				End:   101,
@@ -50,8 +50,8 @@ func TestTimerange(t *testing.T) {
 	})
 
 	o.Spec("it only returns envelopes that have the correct source ID", func(t TTR) {
-		e1 := marshalEnvelope(&loggregator.Envelope{SourceUuid: "wrong"})
-		e2 := marshalEnvelope(&loggregator.Envelope{SourceUuid: "some-id", Timestamp: 99})
+		e1 := marshalEnvelope(&loggregator.Envelope{SourceId: "wrong"})
+		e2 := marshalEnvelope(&loggregator.Envelope{SourceId: "some-id", Timestamp: 99})
 
 		key, _, err := t.tr.Map(e1)
 		Expect(t, err == nil).To(BeTrue())
@@ -64,10 +64,10 @@ func TestTimerange(t *testing.T) {
 	})
 
 	o.Spec("it filters out envelopes that are outside the time range", func(t TTR) {
-		e1 := marshalEnvelope(&loggregator.Envelope{SourceUuid: "some-id", Timestamp: 98})
-		e2 := marshalEnvelope(&loggregator.Envelope{SourceUuid: "some-id", Timestamp: 99})
-		e3 := marshalEnvelope(&loggregator.Envelope{SourceUuid: "some-id", Timestamp: 100})
-		e4 := marshalEnvelope(&loggregator.Envelope{SourceUuid: "some-id", Timestamp: 101})
+		e1 := marshalEnvelope(&loggregator.Envelope{SourceId: "some-id", Timestamp: 98})
+		e2 := marshalEnvelope(&loggregator.Envelope{SourceId: "some-id", Timestamp: 99})
+		e3 := marshalEnvelope(&loggregator.Envelope{SourceId: "some-id", Timestamp: 100})
+		e4 := marshalEnvelope(&loggregator.Envelope{SourceId: "some-id", Timestamp: 101})
 
 		key, _, _ := t.tr.Map(e1)
 		Expect(t, key).To(HaveLen(0))
@@ -83,7 +83,7 @@ func TestTimerange(t *testing.T) {
 	})
 
 	o.Spec("it uses the timestamp as a key", func(t TTR) {
-		e := marshalEnvelope(&loggregator.Envelope{SourceUuid: "some-id", Timestamp: 99})
+		e := marshalEnvelope(&loggregator.Envelope{SourceId: "some-id", Timestamp: 99})
 		key, _, _ := t.tr.Map(e)
 		Expect(t, key).To(Equal("99"))
 	})

@@ -86,7 +86,7 @@ func TestAnalyst(t *testing.T) {
 			var err error
 			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 			results, err = t.client.Query(ctx, &loggrebutterfly.QueryInfo{
-				SourceUuid: "some-id",
+				SourceId: "some-id",
 				TimeRange: &loggrebutterfly.TimeRange{
 					Start: 10,
 					End:   20,
@@ -104,7 +104,7 @@ func TestAnalyst(t *testing.T) {
 
 		Expect(t, results.Envelopes).To(HaveLen(10))
 		for i, e := range results.Envelopes {
-			Expect(t, e.SourceUuid).To(Equal("some-id"))
+			Expect(t, e.SourceId).To(Equal("some-id"))
 			Expect(t, e.Timestamp).To(Equal(int64(i + 10)))
 		}
 	})
@@ -116,7 +116,7 @@ func serveUpData() {
 		go func(rx talaria.Node_ReadServer) {
 			for i := 0; i < 100; i++ {
 				e := &v2.Envelope{
-					SourceUuid: "some-id",
+					SourceId: "some-id",
 					Timestamp:  int64(i),
 				}
 				data, err := proto.Marshal(e)

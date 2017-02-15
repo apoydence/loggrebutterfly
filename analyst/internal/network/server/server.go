@@ -6,7 +6,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/apoydence/loggrebutterfly/api/loggregator/v2"
+	loggregator "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
 	v1 "github.com/apoydence/loggrebutterfly/api/v1"
 	"github.com/golang/protobuf/proto"
 )
@@ -26,7 +26,7 @@ func New(c Calculator) *Server {
 }
 
 func (s *Server) Query(ctx context.Context, info *v1.QueryInfo) (resp *v1.QueryResponse, err error) {
-	if info.SourceUuid == "" {
+	if info.SourceId == "" {
 		return nil, fmt.Errorf("a SourceId is required")
 	}
 
@@ -35,7 +35,7 @@ func (s *Server) Query(ctx context.Context, info *v1.QueryInfo) (resp *v1.QueryR
 		return nil, err
 	}
 
-	result, err := s.calc.Calculate(info.SourceUuid, "timerange", ctx, data)
+	result, err := s.calc.Calculate(info.SourceId, "timerange", ctx, data)
 	if err != nil {
 		return nil, err
 	}

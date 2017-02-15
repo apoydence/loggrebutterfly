@@ -24,7 +24,7 @@ func (r TimeRange) Map(value []byte) (key string, output []byte, err error) {
 		return "", nil, err
 	}
 
-	if r.info.SourceUuid != e.SourceUuid ||
+	if r.info.SourceId != e.SourceId ||
 		(e.Timestamp < r.info.TimeRange.Start || e.Timestamp >= r.info.TimeRange.End) {
 		return "", nil, nil
 	}

@@ -21,7 +21,7 @@ func (h *Hasher) Hash(data []byte) (hash uint64, err error) {
 	}
 
 	f := fnv.New64a()
-	f.Write([]byte(e.SourceUuid))
+	f.Write([]byte(e.SourceId))
 
 	return f.Sum64(), nil
 }

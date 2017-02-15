@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/apoydence/loggrebutterfly/analyst/internal/network/server"
-	"github.com/apoydence/loggrebutterfly/api/loggregator/v2"
+	loggregator "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
 	v1 "github.com/apoydence/loggrebutterfly/api/v1"
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
@@ -65,19 +65,19 @@ func TestServer(t *testing.T) {
 		})
 
 		o.Spec("it uses the calculator and returns the results", func(t TS) {
-			resp, err := t.s.Query(context.Background(), &v1.QueryInfo{SourceUuid: "id"})
+			resp, err := t.s.Query(context.Background(), &v1.QueryInfo{SourceId: "id"})
 			Expect(t, err == nil).To(BeTrue())
 
 			Expect(t, resp.Envelopes).To(HaveLen(2))
-			Expect(t, resp.Envelopes[0].SourceUuid).To(Or(
+			Expect(t, resp.Envelopes[0].SourceId).To(Or(
 				Equal("a"),
 				Equal("b"),
 			))
-			Expect(t, resp.Envelopes[1].SourceUuid).To(Or(
+			Expect(t, resp.Envelopes[1].SourceId).To(Or(
 				Equal("a"),
 				Equal("b"),
 			))
-			Expect(t, resp.Envelopes[0].SourceUuid).To(Not(Equal(resp.Envelopes[1].SourceUuid)))
+			Expect(t, resp.Envelopes[0].SourceId).To(Not(Equal(resp.Envelopes[1].SourceId)))
 		})
 
 		o.Spec("it returns an error if an ID is not given", func(t TS) {
@@ -86,7 +86,7 @@ func TestServer(t *testing.T) {
 		})
 
 		o.Spec("it uses the expected info for the calculator", func(t TS) {
-			t.s.Query(context.Background(), &v1.QueryInfo{SourceUuid: "id", TimeRange: &v1.TimeRange{
+			t.s.Query(context.Background(), &v1.QueryInfo{SourceId: "id", TimeRange: &v1.TimeRange{
 				Start: 99,
 				End:   101,
 			}})
@@ -100,7 +100,7 @@ func TestServer(t *testing.T) {
 		})
 
 		o.Spec("it includes the request in the meta", func(t TS) {
-			info := &v1.QueryInfo{SourceUuid: "id", TimeRange: &v1.TimeRange{
+			info := &v1.QueryInfo{SourceId: "id", TimeRange: &v1.TimeRange{
 				Start: 99,
 				End:   101,
 			}}
@@ -123,14 +123,14 @@ func TestServer(t *testing.T) {
 		})
 
 		o.Spec("it returns an error", func(t TS) {
-			_, err := t.s.Query(context.Background(), &v1.QueryInfo{SourceUuid: "id"})
+			_, err := t.s.Query(context.Background(), &v1.QueryInfo{SourceId: "id"})
 			Expect(t, err == nil).To(BeFalse())
 		})
 	})
 }
 
 func marshalEnvelope(sourceId string) []byte {
-	e := &loggregator.Envelope{SourceUuid: sourceId}
+	e := &loggregator.Envelope{SourceId: sourceId}
 	data, err := proto.Marshal(e)
 	if err != nil {
 		panic(err)

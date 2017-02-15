@@ -90,7 +90,7 @@ func TestDataNode(t *testing.T) {
 
 	o.Spec("it writes to the talaria node", func(t TDN) {
 		e := &v2.Envelope{
-			SourceUuid: "some-id",
+			SourceId: "some-id",
 		}
 
 		data, err := proto.Marshal(e)

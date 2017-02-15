@@ -101,7 +101,7 @@ func TestMaster(t *testing.T) {
 		client := client.New(fmt.Sprintf("127.0.0.1:%d", masterPort))
 
 		e := &v2.Envelope{
-			SourceUuid: "some-id",
+			SourceId: "some-id",
 			Timestamp:  99,
 		}
 
@@ -128,7 +128,7 @@ func TestMaster(t *testing.T) {
 		f = func() bool {
 			var err error
 			queryResp, err = analyst.Query(context.Background(), &pb.QueryInfo{
-				SourceUuid: "some-id",
+				SourceId: "some-id",
 				TimeRange: &pb.TimeRange{
 					Start: 99,
 					End:   10000,

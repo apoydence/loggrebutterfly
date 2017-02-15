@@ -64,7 +64,7 @@ func (c *Client) ReadFrom(sourceUUID string) func() (*v2.Envelope, error) {
 				return nil, err
 			}
 
-			if e.SourceUuid != sourceUUID {
+			if e.SourceId != sourceUUID {
 				continue
 			}
 

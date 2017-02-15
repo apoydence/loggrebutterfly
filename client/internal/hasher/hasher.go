@@ -28,5 +28,5 @@ func (h *Hasher) Hash(data []byte) (hash uint64, err error) {
 		return 0, err
 	}
 
-	return h.HashString(e.SourceUuid), nil
+	return h.HashString(e.SourceId), nil
 }
