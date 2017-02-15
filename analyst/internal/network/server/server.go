@@ -27,7 +27,7 @@ func New(c Calculator) *Server {
 
 func (s *Server) Query(ctx context.Context, info *v1.QueryInfo) (resp *v1.QueryResponse, err error) {
 	if info.SourceId == "" {
-		return nil, fmt.Errorf("a SourceId is required")
+		return nil, fmt.Errorf("a source_id is required")
 	}
 
 	data, err := proto.Marshal(info)

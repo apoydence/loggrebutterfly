@@ -2,6 +2,7 @@ package filesystem
 
 import (
 	"io"
+	"log"
 
 	talaria "github.com/apoydence/talaria/api/v1"
 	"golang.org/x/net/context"
@@ -80,7 +81,13 @@ func (f *FileSystem) fetchAllFiles(ctx context.Context) (files map[string][]stri
 func (f *FileSystem) swapToAnalyst(m map[string][]string) {
 	for _, v := range m {
 		for i := range v {
-			v[i] = f.toAnalyst[v[i]]
+			a, ok := f.toAnalyst[v[i]]
+			if !ok {
+				log.Printf("Unable to swap '%s' to analyst addr", v[i])
+				continue
+			}
+
+			v[i] = a
 		}
 	}
 }
