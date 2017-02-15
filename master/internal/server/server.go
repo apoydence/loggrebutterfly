@@ -16,12 +16,14 @@ type Lister interface {
 }
 
 type Server struct {
-	lister Lister
+	lister       Lister
+	analystAddrs []string
 }
 
-func Start(addr string, lister Lister) (actualAddr string, err error) {
+func Start(addr string, analystAddrs []string, lister Lister) (actualAddr string, err error) {
 	s := &Server{
-		lister: lister,
+		lister:       lister,
+		analystAddrs: analystAddrs,
 	}
 
 	lis, err := net.Listen("tcp", addr)
@@ -53,4 +55,13 @@ func (s *Server) Routes(ctx context.Context, in *pb.RoutesInfo) (*pb.RoutesRespo
 	}
 
 	return &resp, nil
+}
+
+func (s *Server) Analysts(ctx context.Context, in *pb.AnalystsInfo) (*pb.AnalystsResponse, error) {
+	var info []*pb.AnalystInfo
+	for _, addr := range s.analystAddrs {
+		info = append(info, &pb.AnalystInfo{Addr: addr})
+	}
+
+	return &pb.AnalystsResponse{Analysts: info}, nil
 }

@@ -218,6 +218,7 @@ func startMaster(routerPorts, extRouterPorts, nodePorts, nodeIntraPorts []int) (
 		fmt.Sprintf("DATA_NODE_ADDRS=%s", buildNodeURIs(routerPorts)),
 		fmt.Sprintf("DATA_NODE_EXTERNAL_ADDRS=%s", buildNodeURIs(extRouterPorts)),
 		fmt.Sprintf("TALARIA_NODE_ADDRS=%s", buildNodeURIs(nodePorts)),
+		"ANALYST_ADDRS=left-out",
 		"BALANCER_INTERVAL=1s",
 		"FILLER_INTERVAL=1s",
 	}

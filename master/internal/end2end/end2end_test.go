@@ -19,9 +19,9 @@ import (
 	"google.golang.org/grpc/grpclog"
 
 	"github.com/apoydence/eachers/testhelpers"
-	"github.com/apoydence/loggrebutterfly/internal/end2end"
 	"github.com/apoydence/loggrebutterfly/api/intra"
 	pb "github.com/apoydence/loggrebutterfly/api/v1"
+	"github.com/apoydence/loggrebutterfly/internal/end2end"
 	"github.com/apoydence/onpar"
 	"github.com/apoydence/petasos/router"
 	talariapb "github.com/apoydence/talaria/api/v1"
@@ -189,6 +189,7 @@ func startMaster(port int, schedAddr string, routers []string) *os.Process {
 		fmt.Sprintf("DATA_NODE_EXTERNAL_ADDRS=%s", buildDataNodeAddrs(routers)),
 		fmt.Sprintf("DATA_NODE_ADDRS=%s", buildDataNodeAddrs(routers)),
 		fmt.Sprintf("TALARIA_NODE_ADDRS=%s", buildDataNodeAddrs(routers)),
+		"ANALYST_ADDRS=analyst-a,analyst-b",
 		"BALANCER_INTERVAL=1ms",
 		"FILLER_INTERVAL=1ms",
 	}

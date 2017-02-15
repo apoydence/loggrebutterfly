@@ -61,6 +61,15 @@ type mockMasterServer struct {
 		Ret0 chan *pb.RoutesResponse
 		Ret1 chan error
 	}
+	AnalystsCalled chan bool
+	AnalystsInput  struct {
+		Arg0 chan context.Context
+		Arg1 chan *pb.AnalystsInfo
+	}
+	AnalystsOutput struct {
+		Ret0 chan *pb.AnalystsResponse
+		Ret1 chan error
+	}
 }
 
 func newMockMasterServer() *mockMasterServer {
@@ -70,6 +79,11 @@ func newMockMasterServer() *mockMasterServer {
 	m.RoutesInput.Arg1 = make(chan *pb.RoutesInfo, 100)
 	m.RoutesOutput.Ret0 = make(chan *pb.RoutesResponse, 100)
 	m.RoutesOutput.Ret1 = make(chan error, 100)
+	m.AnalystsCalled = make(chan bool, 100)
+	m.AnalystsInput.Arg0 = make(chan context.Context, 100)
+	m.AnalystsInput.Arg1 = make(chan *pb.AnalystsInfo, 100)
+	m.AnalystsOutput.Ret0 = make(chan *pb.AnalystsResponse, 100)
+	m.AnalystsOutput.Ret1 = make(chan error, 100)
 	return m
 }
 func (m *mockMasterServer) Routes(arg0 context.Context, arg1 *pb.RoutesInfo) (*pb.RoutesResponse, error) {
@@ -77,6 +91,12 @@ func (m *mockMasterServer) Routes(arg0 context.Context, arg1 *pb.RoutesInfo) (*p
 	m.RoutesInput.Arg0 <- arg0
 	m.RoutesInput.Arg1 <- arg1
 	return <-m.RoutesOutput.Ret0, <-m.RoutesOutput.Ret1
+}
+func (m *mockMasterServer) Analysts(arg0 context.Context, arg1 *pb.AnalystsInfo) (*pb.AnalystsResponse, error) {
+	m.AnalystsCalled <- true
+	m.AnalystsInput.Arg0 <- arg0
+	m.AnalystsInput.Arg1 <- arg1
+	return <-m.AnalystsOutput.Ret0, <-m.AnalystsOutput.Ret1
 }
 
 type mockRouteCache struct {

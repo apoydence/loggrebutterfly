@@ -4,6 +4,7 @@ package loggrebutterfly;
 
 service Master {
   rpc Routes(RoutesInfo) returns (RoutesResponse) {}
+  rpc Analysts(AnalystsInfo) returns (AnalystsResponse) {}
 }
 
 message RoutesInfo {
@@ -16,4 +17,15 @@ message RoutesResponse {
 message RouteInfo {
   string name = 1;
   string leader = 2;
+}
+
+message AnalystsInfo {
+}
+
+message AnalystsResponse {
+  repeated AnalystInfo analysts = 1;
+}
+
+message AnalystInfo {
+  string addr = 1;
 }

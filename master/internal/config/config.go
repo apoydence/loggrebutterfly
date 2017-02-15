@@ -17,6 +17,8 @@ type Config struct {
 	TalariaNodeAddrs     []string `env:"TALARIA_NODE_ADDRS,required"`
 	TalariaNodeConverter map[string]string
 
+	AnalystAddrs []string `env:"ANALYST_ADDRS,required"`
+
 	MaxRoutes        uint64        `env:"MAX_ROUTES"`
 	MinRoutes        uint64        `env:"MIN_ROUTES"`
 	BalancerInterval time.Duration `env:"BALANCER_INTERVAL"`

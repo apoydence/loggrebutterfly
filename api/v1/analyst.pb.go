@@ -21,6 +21,9 @@ It has these top-level messages:
 	RoutesInfo
 	RoutesResponse
 	RouteInfo
+	AnalystsInfo
+	AnalystsResponse
+	AnalystInfo
 */
 package loggrebutterfly
 

@@ -13,8 +13,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/apoydence/loggrebutterfly/master/internal/server"
 	pb "github.com/apoydence/loggrebutterfly/api/v1"
+	"github.com/apoydence/loggrebutterfly/master/internal/server"
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"
@@ -42,7 +42,11 @@ func TestServer(t *testing.T) {
 
 	o.BeforeEach(func(t *testing.T) TS {
 		mockLister := newMockLister()
-		addr, err := server.Start("127.0.0.1:0", mockLister)
+		analysts := []string{
+			"analyst-a",
+			"analyst-b",
+		}
+		addr, err := server.Start("127.0.0.1:0", analysts, mockLister)
 		Expect(t, err == nil).To(BeTrue())
 
 		return TS{
@@ -73,6 +77,22 @@ func TestServer(t *testing.T) {
 		))
 		Expect(t, resp.Routes[0].Name).To(Not(Equal(resp.Routes[1].Name)))
 		Expect(t, resp.Routes[0].Leader).To(Equal("some-leader"))
+	})
+
+	o.Spec("it reports the analyst addrs", func(t TS) {
+		ctx, _ := context.WithTimeout(context.Background(), time.Second)
+		resp, err := t.masterClient.Analysts(ctx, new(pb.AnalystsInfo))
+		Expect(t, err == nil).To(BeTrue())
+		Expect(t, resp.Analysts).To(HaveLen(2))
+		Expect(t, resp.Analysts[0].Addr).To(Or(
+			Equal("analyst-a"),
+			Equal("analyst-b"),
+		))
+		Expect(t, resp.Analysts[1].Addr).To(Or(
+			Equal("analyst-a"),
+			Equal("analyst-b"),
+		))
+		Expect(t, resp.Analysts[0].Addr).To(Not(Equal(resp.Analysts[1].Addr)))
 	})
 }
 

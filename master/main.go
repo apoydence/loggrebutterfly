@@ -33,7 +33,7 @@ func main() {
 	)
 
 	log.Printf("Starting server on %s", conf.Addr)
-	addr, err := server.Start(conf.Addr, fs)
+	addr, err := server.Start(conf.Addr, conf.AnalystAddrs, fs)
 	if err != nil {
 		log.Fatal("Unable to start server: %s", err)
 	}
