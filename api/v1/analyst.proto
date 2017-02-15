@@ -20,5 +20,5 @@ message TimeRange {
 }
 
 message QueryResponse {
-  repeated loggregator.Envelope envelopes = 1;
+  repeated loggregator.v2.Envelope envelopes = 1;
 }
