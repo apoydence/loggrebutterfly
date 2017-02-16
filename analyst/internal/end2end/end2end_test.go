@@ -66,7 +66,7 @@ type TA struct {
 	client loggrebutterfly.AnalystClient
 }
 
-func TestAnalyst(t *testing.T) {
+func TestAnalystQuery(t *testing.T) {
 	t.Parallel()
 	o := onpar.New()
 	defer o.Run(t)
@@ -110,14 +110,69 @@ func TestAnalyst(t *testing.T) {
 	})
 }
 
+func TestAnalystAggregate(t *testing.T) {
+	t.Parallel()
+	o := onpar.New()
+	defer o.Run(t)
+
+	o.BeforeEach(func(t *testing.T) TA {
+		client := startClient(fmt.Sprintf("localhost:%d", analystPort))
+
+		return TA{
+			T:      t,
+			client: client,
+		}
+	})
+
+	o.Spec("it aggregates data into the requested buckets", func(t TA) {
+		var results *loggrebutterfly.AggregateResponse
+		f := func() bool {
+			var err error
+			ctx, _ := context.WithTimeout(context.Background(), time.Second)
+			results, err = t.client.Aggregate(ctx, &loggrebutterfly.AggregateInfo{
+				BucketWidthNs: 5,
+				Query: &loggrebutterfly.QueryInfo{
+					SourceId: "some-id",
+					TimeRange: &loggrebutterfly.TimeRange{
+						Start: 10,
+						End:   20,
+					},
+				},
+
+				Aggregation: &loggrebutterfly.AggregateInfo_Counter{
+					Counter: &loggrebutterfly.CounterAggregation{
+						Name: "some-name",
+					},
+				},
+			})
+			return err == nil
+		}
+
+		Expect(t, f).To(ViaPollingMatcher{
+			Duration: 5 * time.Second,
+			Matcher:  BeTrue(),
+		})
+
+		Expect(t, results.Results).To(HaveLen(2))
+		Expect(t, results.Results[10]).To(Equal(float64(99 * 5)))
+		Expect(t, results.Results[15]).To(Equal(float64(99 * 5)))
+	})
+}
+
 func serveUpData() {
 	for {
 		rx := <-mockNode.ReadInput.Arg1
 		go func(rx talaria.Node_ReadServer) {
 			for i := 0; i < 100; i++ {
 				e := &v2.Envelope{
-					SourceId: "some-id",
-					Timestamp:  int64(i),
+					SourceId:  "some-id",
+					Timestamp: int64(i),
+					Message: &v2.Envelope_Counter{
+						Counter: &v2.Counter{
+							Name:  "some-name",
+							Value: &v2.Counter_Total{99},
+						},
+					},
 				}
 				data, err := proto.Marshal(e)
 				if err != nil {

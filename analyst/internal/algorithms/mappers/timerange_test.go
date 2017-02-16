@@ -45,7 +45,7 @@ func TestTimerange(t *testing.T) {
 		}
 		return TTR{
 			T:  t,
-			tr: mappers.NewTimeRange(req),
+			tr: mappers.NewTimeRange(&v1.AggregateInfo{Query: req}),
 		}
 	})
 

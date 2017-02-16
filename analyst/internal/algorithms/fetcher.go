@@ -8,7 +8,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-type AlgBuilder func(req *v1.QueryInfo) mapreduce.Algorithm
+type AlgBuilder func(req *v1.AggregateInfo) mapreduce.Algorithm
 
 type Fetcher struct {
 	builders map[string]AlgBuilder
@@ -26,7 +26,7 @@ func (f *Fetcher) Alg(name string, meta []byte) (mapreduce.Algorithm, error) {
 		return mapreduce.Algorithm{}, fmt.Errorf("unknown alg %s", name)
 	}
 
-	var req v1.QueryInfo
+	var req v1.AggregateInfo
 	if err := proto.Unmarshal(meta, &req); err != nil {
 		return mapreduce.Algorithm{}, err
 	}

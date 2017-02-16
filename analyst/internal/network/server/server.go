@@ -1,8 +1,11 @@
 package server
 
 import (
+	"encoding/binary"
 	"fmt"
 	"log"
+	"math"
+	"strconv"
 
 	"golang.org/x/net/context"
 
@@ -30,7 +33,7 @@ func (s *Server) Query(ctx context.Context, info *v1.QueryInfo) (resp *v1.QueryR
 		return nil, fmt.Errorf("a source_id is required")
 	}
 
-	data, err := proto.Marshal(info)
+	data, err := proto.Marshal(&v1.AggregateInfo{Query: info})
 	if err != nil {
 		return nil, err
 	}
@@ -45,6 +48,34 @@ func (s *Server) Query(ctx context.Context, info *v1.QueryInfo) (resp *v1.QueryR
 	}, nil
 }
 
+func (s *Server) Aggregate(ctx context.Context, info *v1.AggregateInfo) (resp *v1.AggregateResponse, err error) {
+	if info.GetQuery().SourceId == "" {
+		return nil, fmt.Errorf("a source_id is required")
+	}
+
+	if info.Aggregation == nil {
+		return nil, fmt.Errorf("a aggregation is required")
+	}
+
+	if info.BucketWidthNs == 0 {
+		return nil, fmt.Errorf("a bucket_width_ns is required")
+	}
+
+	data, err := proto.Marshal(info)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := s.calc.Calculate(info.GetQuery().SourceId, "aggregation", ctx, data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.AggregateResponse{
+		Results: resultsToFloat(result),
+	}, nil
+}
+
 func flattenResults(m map[string][]byte) (results []*loggregator.Envelope) {
 	for _, v := range m {
 		var e loggregator.Envelope
@@ -56,4 +87,25 @@ func flattenResults(m map[string][]byte) (results []*loggregator.Envelope) {
 		results = append(results, &e)
 	}
 	return results
+}
+
+func resultsToFloat(r map[string][]byte) map[int64]float64 {
+	m := make(map[int64]float64)
+	for k, v := range r {
+		if len(v) != 8 {
+			log.Printf("Invalid value (len=%d): %v", len(v), v)
+			continue
+		}
+
+		bits := binary.LittleEndian.Uint64(v)
+		float := math.Float64frombits(bits)
+		i, err := strconv.ParseInt(k, 10, 64)
+		if err != nil {
+			log.Printf("Unable to parse key (%s) into int64: %s", k, err)
+			continue
+		}
+		m[i] = float
+	}
+
+	return m
 }

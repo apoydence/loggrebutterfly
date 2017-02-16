@@ -6,11 +6,21 @@ package loggrebutterfly;
 
 service Analyst{
   rpc Query(QueryInfo) returns (QueryResponse) {}
+  rpc Aggregate(AggregateInfo) returns (AggregateResponse) {}
 }
 
 message QueryInfo {
-  string source_uuid = 1;
+  string source_id = 1;
   TimeRange timeRange = 2;
+}
+
+message AggregateInfo {
+  QueryInfo query = 1;
+  int64 bucket_width_ns = 2;
+
+  oneof Aggregation {
+    CounterAggregation counter = 3;
+  }
 }
 
 // [start, end)
@@ -21,4 +31,12 @@ message TimeRange {
 
 message QueryResponse {
   repeated loggregator.v2.Envelope envelopes = 1;
+}
+
+message AggregateResponse {
+  map<int64, double> results = 1;
+}
+
+message CounterAggregation {
+  string name = 1;
 }

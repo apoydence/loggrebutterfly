@@ -37,7 +37,7 @@ func TestFetcher(t *testing.T) {
 	defer o.Run(t)
 
 	o.BeforeEach(func(t *testing.T) TF {
-		builder := func(*v1.QueryInfo) mapreduce.Algorithm { return mapreduce.Algorithm{} }
+		builder := func(*v1.AggregateInfo) mapreduce.Algorithm { return mapreduce.Algorithm{} }
 		builders := map[string]algorithms.AlgBuilder{
 			"a": builder,
 		}

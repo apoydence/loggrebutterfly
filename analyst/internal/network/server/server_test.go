@@ -2,10 +2,12 @@ package server_test
 
 import (
 	"context"
+	"encoding/binary"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"testing"
 
@@ -39,7 +41,7 @@ type TS struct {
 	s        *server.Server
 }
 
-func TestServer(t *testing.T) {
+func TestServerQuery(t *testing.T) {
 	t.Parallel()
 	o := onpar.New()
 	defer o.Run(t)
@@ -106,7 +108,7 @@ func TestServer(t *testing.T) {
 			}}
 			t.s.Query(context.Background(), info)
 
-			marshelled, err := proto.Marshal(info)
+			marshelled, err := proto.Marshal(&v1.AggregateInfo{Query: info})
 			Expect(t, err == nil).To(BeTrue())
 
 			Expect(t, t.mockCalc.CalculateInput.Meta).To(
@@ -129,6 +131,149 @@ func TestServer(t *testing.T) {
 	})
 }
 
+func TestServerAggregate(t *testing.T) {
+	t.Parallel()
+	o := onpar.New()
+	defer o.Run(t)
+
+	o.BeforeEach(func(t *testing.T) TS {
+		mockCalc := newMockCalculator()
+		return TS{
+			T:        t,
+			mockCalc: mockCalc,
+			s:        server.New(mockCalc),
+		}
+	})
+
+	o.Group("when the calculator does not return an error", func() {
+		o.BeforeEach(func(t TS) TS {
+			close(t.mockCalc.CalculateOutput.Err)
+			t.mockCalc.CalculateOutput.FinalResult <- map[string][]byte{
+				"0":       marshalFloat64(99),
+				"1":       marshalFloat64(101),
+				"2":       []byte("invalid"),
+				"invalid": marshalFloat64(103),
+			}
+			return t
+		})
+
+		o.Spec("it uses the calculator and returns the results", func(t TS) {
+			resp, err := t.s.Aggregate(context.Background(), &v1.AggregateInfo{
+				Query: &v1.QueryInfo{
+					SourceId: "some-id",
+				},
+				Aggregation: &v1.AggregateInfo_Counter{
+					Counter: &v1.CounterAggregation{Name: "some-name"},
+				},
+				BucketWidthNs: 2,
+			})
+			Expect(t, err == nil).To(BeTrue())
+
+			Expect(t, resp.Results).To(HaveLen(2))
+			Expect(t, resp.Results[0]).To(Equal(float64(99)))
+			Expect(t, resp.Results[1]).To(Equal(float64(101)))
+		})
+
+		o.Spec("it returns an error if an ID is not given", func(t TS) {
+			_, err := t.s.Aggregate(context.Background(), &v1.AggregateInfo{
+				Query:         &v1.QueryInfo{},
+				BucketWidthNs: 2,
+				Aggregation: &v1.AggregateInfo_Counter{
+					Counter: &v1.CounterAggregation{Name: "some-name"},
+				},
+			})
+			Expect(t, err == nil).To(BeFalse())
+		})
+
+		o.Spec("it returns an error if an aggregation is not given", func(t TS) {
+			_, err := t.s.Aggregate(context.Background(), &v1.AggregateInfo{
+				BucketWidthNs: 2,
+				Query:         &v1.QueryInfo{SourceId: "some-id"},
+			})
+			Expect(t, err == nil).To(BeFalse())
+		})
+
+		o.Spec("it returns an error if an bucket widtch is not given", func(t TS) {
+			_, err := t.s.Aggregate(context.Background(), &v1.AggregateInfo{
+				Query: &v1.QueryInfo{SourceId: "some-id"},
+				Aggregation: &v1.AggregateInfo_Counter{
+					Counter: &v1.CounterAggregation{Name: "some-name"},
+				},
+			})
+			Expect(t, err == nil).To(BeFalse())
+		})
+
+		o.Spec("it uses the expected info for the calculator", func(t TS) {
+			t.s.Aggregate(context.Background(), &v1.AggregateInfo{Query: &v1.QueryInfo{
+				SourceId: "id",
+				TimeRange: &v1.TimeRange{
+					Start: 99,
+					End:   101,
+				},
+			},
+				BucketWidthNs: 2,
+				Aggregation: &v1.AggregateInfo_Counter{
+					Counter: &v1.CounterAggregation{Name: "some-name"},
+				},
+			})
+
+			Expect(t, t.mockCalc.CalculateInput.Route).To(
+				Chain(Receive(), Equal("id")),
+			)
+			Expect(t, t.mockCalc.CalculateInput.AlgName).To(
+				Chain(Receive(), Equal("aggregation")),
+			)
+		})
+
+		o.Spec("it includes the request in the meta", func(t TS) {
+			info := &v1.AggregateInfo{Query: &v1.QueryInfo{
+				SourceId: "id",
+				TimeRange: &v1.TimeRange{
+					Start: 99,
+					End:   101,
+				},
+			},
+				BucketWidthNs: 2,
+				Aggregation: &v1.AggregateInfo_Counter{
+					Counter: &v1.CounterAggregation{Name: "some-name"},
+				},
+			}
+			t.s.Aggregate(context.Background(), info)
+
+			marshelled, err := proto.Marshal(info)
+			Expect(t, err == nil).To(BeTrue())
+
+			Expect(t, t.mockCalc.CalculateInput.Meta).To(
+				Chain(Receive(), Equal(marshelled)),
+			)
+		})
+	})
+
+	o.Group("when the calculator returns an error", func() {
+		o.BeforeEach(func(t TS) TS {
+			t.mockCalc.CalculateOutput.Err <- fmt.Errorf("some-error")
+			close(t.mockCalc.CalculateOutput.FinalResult)
+			return t
+		})
+
+		o.Spec("it returns an error", func(t TS) {
+			_, err := t.s.Aggregate(context.Background(), &v1.AggregateInfo{Query: &v1.QueryInfo{
+				SourceId: "id",
+				TimeRange: &v1.TimeRange{
+					Start: 99,
+					End:   101,
+				},
+			},
+				BucketWidthNs: 2,
+				Aggregation: &v1.AggregateInfo_Counter{
+					Counter: &v1.CounterAggregation{Name: "some-name"},
+				},
+			})
+			Expect(t, err == nil).To(BeFalse())
+		})
+	})
+}
+
 func marshalEnvelope(sourceId string) []byte {
 	e := &loggregator.Envelope{SourceId: sourceId}
 	data, err := proto.Marshal(e)
@@ -136,4 +281,11 @@ func marshalEnvelope(sourceId string) []byte {
 		panic(err)
 	}
 	return data
+}
+
+func marshalFloat64(f float64) []byte {
+	bits := math.Float64bits(f)
+	bytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(bytes, bits)
+	return bytes
 }
