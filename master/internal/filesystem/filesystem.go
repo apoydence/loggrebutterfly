@@ -12,10 +12,12 @@ import (
 type FileSystem struct {
 	schedClient       pb.SchedulerClient
 	nodeAddrConverter map[string]string
+	bufferSize        uint64
 }
 
-func New(addr string, nodeAddrConverter map[string]string) *FileSystem {
+func New(bufferSize uint64, addr string, nodeAddrConverter map[string]string) *FileSystem {
 	return &FileSystem{
+		bufferSize:        bufferSize,
 		schedClient:       setupSchedClient(addr),
 		nodeAddrConverter: nodeAddrConverter,
 	}
@@ -23,7 +25,10 @@ func New(addr string, nodeAddrConverter map[string]string) *FileSystem {
 
 func (f *FileSystem) Create(file string) (err error) {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	_, err = f.schedClient.Create(ctx, &pb.CreateInfo{Name: file})
+	_, err = f.schedClient.Create(ctx, &pb.CreateInfo{
+		Name:       file,
+		BufferSize: f.bufferSize,
+	})
 	return err
 }
 

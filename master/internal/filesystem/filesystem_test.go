@@ -56,7 +56,8 @@ func TestFileSystemCreate(t *testing.T) {
 
 			Expect(t, t.mockSchedulerServer.CreateInput.Arg1).To(
 				Chain(Receive(), Equal(&pb.CreateInfo{
-					Name: "some-file",
+					Name:       "some-file",
+					BufferSize: 99,
 				})),
 			)
 		})
@@ -134,7 +135,7 @@ func setup(o *onpar.Onpar) {
 		return TF{
 			T:                   t,
 			mockSchedulerServer: mockSchedulerServer,
-			fs:                  filesystem.New(addr, m),
+			fs:                  filesystem.New(99, addr, m),
 		}
 	})
 }

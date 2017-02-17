@@ -23,15 +23,18 @@ type Config struct {
 	MinRoutes        uint64        `env:"MIN_ROUTES"`
 	BalancerInterval time.Duration `env:"BALANCER_INTERVAL"`
 	FillerInterval   time.Duration `env:"FILLER_INTERVAL"`
+
+	TalariaBufferSize uint64 `env:"TALARIA_BUFFER_SIZE"`
 }
 
 func Load() Config {
 	conf := Config{
-		MaxRoutes:        10,
-		MinRoutes:        4,
-		BalancerInterval: 5 * time.Second,
-		FillerInterval:   time.Second,
-		PprofAddr:        "localhost:0",
+		MaxRoutes:         10,
+		MinRoutes:         4,
+		BalancerInterval:  5 * time.Second,
+		FillerInterval:    time.Second,
+		PprofAddr:         "localhost:0",
+		TalariaBufferSize: 100,
 	}
 	if err := envstruct.Load(&conf); err != nil {
 		log.Fatalf("Unable to load config: %s", err)
