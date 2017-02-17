@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"hash/fnv"
-	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -150,11 +149,6 @@ func tailCommand(client *client.Client) {
 	var i int
 	for {
 		envelope, err := rx()
-		if err == io.EOF {
-			time.Sleep(250 * time.Millisecond)
-			continue
-		}
-
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -186,10 +180,10 @@ func writeDataCommand(client *client.Client) {
 		for i := 0; i < 10; i++ {
 			var err error
 			if err = client.Write(&e); err == nil {
-				log.Printf("Successfully wrote data: %v\n", e)
+				log.Printf("Successfully wrote data (count=%d): %v\n", count, e)
 				break
 			}
-			log.Println("Error writing", err)
+			log.Printf("Error (%v) writing (retrying %d/10): %v\n", err, i, e)
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -304,6 +298,7 @@ func queryData() {
 	for _, v := range fr {
 		fmt.Printf("%d -> %v\n", v.t, v.f)
 	}
+	fmt.Printf("reported %d results", len(fr))
 }
 
 func onlyOneCommandUsage() {
