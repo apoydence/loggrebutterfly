@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"hash/fnv"
@@ -17,6 +18,7 @@ import (
 	v2 "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
 	pb "github.com/apoydence/loggrebutterfly/api/v1"
 	"github.com/apoydence/loggrebutterfly/client"
+	"github.com/apoydence/petasos/router"
 	"github.com/golang/protobuf/jsonpb"
 
 	"google.golang.org/grpc"
@@ -210,8 +212,10 @@ func list() {
 		log.Fatal(err)
 	}
 
+	sort.Sort(routes(resp.Routes))
+
 	for i, r := range resp.Routes {
-		fmt.Printf("Route %d: %+v\n", i, r)
+		fmt.Printf("Route %d: %s (Leader=%s)\n", i, r.Name, r.Leader)
 	}
 	fmt.Printf("Listed %d routes\n", len(resp.Routes))
 }
@@ -291,8 +295,14 @@ func queryData() {
 		log.Fatalf("Executing query failed: %s", err)
 	}
 
+	var fr []floatResult
 	for k, v := range results.Results {
-		fmt.Printf("%d -> %v\n", k, v)
+		fr = append(fr, floatResult{t: k, f: v})
+	}
+
+	sort.Sort(floatResults(fr))
+	for _, v := range fr {
+		fmt.Printf("%d -> %v\n", v.t, v.f)
 	}
 }
 
@@ -322,4 +332,43 @@ func mapToEnvelope(m map[string]interface{}) *v2.Envelope {
 	e.Timestamp = m["source_id"].(int64)
 
 	return &e
+}
+
+type floatResult struct {
+	t int64
+	f float64
+}
+type floatResults []floatResult
+
+func (r floatResults) Len() int {
+	return len(r)
+}
+
+func (r floatResults) Less(i, j int) bool {
+	return r[i].t < r[j].t
+}
+
+func (r floatResults) Swap(i, j int) {
+	tmp := r[i]
+	r[i] = r[j]
+	r[j] = tmp
+}
+
+type routes []*pb.RouteInfo
+
+func (r routes) Len() int {
+	return len(r)
+}
+
+func (r routes) Less(i, j int) bool {
+	var rn1, rn2 router.RangeName
+	json.Unmarshal([]byte(r[i].Name), &rn1)
+	json.Unmarshal([]byte(r[j].Name), &rn2)
+	return rn1.Term < rn2.Term
+}
+
+func (r routes) Swap(i, j int) {
+	tmp := r[i]
+	r[i] = r[j]
+	r[j] = tmp
 }
