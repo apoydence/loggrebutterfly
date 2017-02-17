@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"hash/fnv"
@@ -18,6 +17,7 @@ import (
 	v2 "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
 	pb "github.com/apoydence/loggrebutterfly/api/v1"
 	"github.com/apoydence/loggrebutterfly/client"
+	"github.com/golang/protobuf/jsonpb"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -30,8 +30,10 @@ var (
 	sourceId        = flag.String("source-id", "", "The source-id to interact with")
 	writePacketSize = flag.Uint("packetSize", 1024, "The size of each write packet")
 
-	queryStart = flag.Int64("query-start", -1, "The start parameter for a query")
-	queryEnd   = flag.Int64("query-end", -1, "The end parameter for a query")
+	analyticsStart          = flag.Int64("analytics-start", -1, "The start parameter for a query")
+	analyticsEnd            = flag.Int64("analytics-end", -1, "The end parameter for a query")
+	analyticsCounterName    = flag.String("counter-name", "", "The name of the counters to aggregate")
+	analyticsBucketDuration = flag.String("bucket-duration", "", "The duration width of each bucket")
 
 	showHash   = flag.Bool("show-hash", false, "Show the hash of a source-id")
 	tail       = flag.Bool("tail", false, "The tail the source-id")
@@ -39,6 +41,8 @@ var (
 	listRoutes = flag.Bool("list", false, "List the routes")
 
 	query = flag.Bool("query", false, "Query the data")
+
+	showCounter = flag.Bool("show-counter-example", false, "Show an example (JSON) counter envelope")
 )
 
 func main() {
@@ -46,6 +50,25 @@ func main() {
 
 	if !*verbose {
 		grpclog.SetLogger(log.New(ioutil.Discard, "", log.LstdFlags))
+	}
+
+	if *showCounter {
+		e := &v2.Envelope{
+			SourceId:  "some-id",
+			Timestamp: 99,
+			Message: &v2.Envelope_Counter{
+				Counter: &v2.Counter{
+					Name: "counter-name",
+					Value: &v2.Counter_Total{
+						Total: 101,
+					},
+				},
+			},
+		}
+
+		data, _ := new(jsonpb.Marshaler).MarshalToString(e)
+		fmt.Println(data)
+		return
 	}
 
 	if *showHash {
@@ -154,14 +177,14 @@ func writeDataCommand(client *client.Client) {
 
 	for scanner.Scan() {
 		var e v2.Envelope
-		if err := json.Unmarshal(scanner.Bytes(), &e); err != nil {
-			log.Fatalf("unable to parse (via json) to v2.Envelope: %s", err)
+		if err := jsonpb.UnmarshalString(string(scanner.Bytes()), &e); err != nil {
+			log.Fatalf("unable to parse (via json) (%s) to v2.Envelope: %s", string(scanner.Bytes()), err)
 		}
 
 		for i := 0; i < 10; i++ {
 			var err error
 			if err = client.Write(&e); err == nil {
-				log.Println("Successfully wrote data")
+				log.Printf("Successfully wrote data: %v\n", e)
 				break
 			}
 			log.Println("Error writing", err)
@@ -198,8 +221,8 @@ func queryData() {
 		onlyOneCommandUsage()
 	}
 
-	if *queryStart == -1 || *queryEnd == -1 || *sourceId == "" {
-		log.Fatal("query-start, query-end and source-id are required")
+	if *analyticsStart == -1 || *analyticsEnd == -1 || *sourceId == "" {
+		log.Fatal("analytics-start, analytics-end and source-id are required")
 	}
 
 	masterClient := setupMasterClient()
@@ -217,24 +240,60 @@ func queryData() {
 	log.Printf("Using analyst %s", analystAddr.Addr)
 	analystClient := setupAnalystClient(analystAddr.Addr)
 
+	if *analyticsCounterName == "" {
+		ctx, _ = context.WithTimeout(context.Background(), 5*time.Second)
+		queryResp, err := analystClient.Query(ctx, &pb.QueryInfo{
+			SourceId: *sourceId,
+			TimeRange: &pb.TimeRange{
+				Start: *analyticsStart,
+				End:   *analyticsEnd,
+			},
+		})
+		if err != nil {
+			log.Fatalf("Executing query failed: %s", err)
+		}
+
+		sort.Sort(envelopes(queryResp.Envelopes))
+
+		for i, e := range queryResp.Envelopes {
+			fmt.Printf("Envelope %d: %+v\n", i, e)
+		}
+		fmt.Printf("Printed %d results", len(queryResp.Envelopes))
+		return
+	}
+
+	if *analyticsBucketDuration == "" {
+		log.Fatal("bucket-duration must be provided")
+	}
+
+	d, err := time.ParseDuration(*analyticsBucketDuration)
+	if err != nil {
+		log.Fatalf("Failed to parse bucket-duration:", err)
+	}
+
 	ctx, _ = context.WithTimeout(context.Background(), 5*time.Second)
-	queryResp, err := analystClient.Query(ctx, &pb.QueryInfo{
-		SourceId: *sourceId,
-		TimeRange: &pb.TimeRange{
-			Start: *queryStart,
-			End:   *queryEnd,
+	results, err := analystClient.Aggregate(ctx, &pb.AggregateInfo{
+		BucketWidthNs: int64(d),
+		Query: &pb.QueryInfo{
+			SourceId: *sourceId,
+			TimeRange: &pb.TimeRange{
+				Start: *analyticsStart,
+				End:   *analyticsEnd,
+			},
+		},
+		Aggregation: &pb.AggregateInfo_Counter{
+			Counter: &pb.CounterAggregation{
+				Name: *analyticsCounterName,
+			},
 		},
 	})
 	if err != nil {
 		log.Fatalf("Executing query failed: %s", err)
 	}
 
-	sort.Sort(envelopes(queryResp.Envelopes))
-
-	for i, e := range queryResp.Envelopes {
-		fmt.Printf("Envelope %d: %+v\n", i, e)
+	for k, v := range results.Results {
+		fmt.Printf("%d -> %v\n", k, v)
 	}
-	fmt.Printf("Printed %d results", len(queryResp.Envelopes))
 }
 
 func onlyOneCommandUsage() {
@@ -255,4 +314,12 @@ func (e envelopes) Swap(i, j int) {
 	tmp := e[i]
 	e[i] = e[j]
 	e[j] = tmp
+}
+
+func mapToEnvelope(m map[string]interface{}) *v2.Envelope {
+	var e v2.Envelope
+	e.SourceId = m["source_id"].(string)
+	e.Timestamp = m["source_id"].(int64)
+
+	return &e
 }
