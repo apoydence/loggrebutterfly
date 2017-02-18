@@ -7,15 +7,15 @@ import (
 )
 
 type RangeMetrics struct {
-	metricsReader *metrics.Reader
+	delta *metrics.Delta
 }
 
 func New(addrs []string) *RangeMetrics {
 	return &RangeMetrics{
-		metricsReader: metrics.NewReader(addrs, networkreader.New()),
+		delta: metrics.NewDelta(10000, metrics.NewReader(addrs, networkreader.New())),
 	}
 }
 
 func (m *RangeMetrics) Metrics(file string) (metric router.Metric, err error) {
-	return m.metricsReader.Metrics(file)
+	return m.delta.Metrics(file)
 }
