@@ -76,3 +76,7 @@ func (w nodeWriter) Write(data []byte) (err error) {
 		Message: data,
 	})
 }
+
+func (w nodeWriter) Close() {
+	w.sender.CloseAndRecv()
+}
