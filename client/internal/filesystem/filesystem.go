@@ -96,6 +96,10 @@ func (w *senderWrapper) Write(data []byte) error {
 	return nil
 }
 
+func (w *senderWrapper) Close() {
+	w.sender.CloseAndRecv()
+}
+
 type receiverWrapper struct {
 	addr   string
 	rx     pb.DataNode_ReadClient
