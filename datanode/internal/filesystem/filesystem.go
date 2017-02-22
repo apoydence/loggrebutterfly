@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	v1 "github.com/apoydence/loggrebutterfly/api/v1"
 	"github.com/apoydence/petasos/router"
 	pb "github.com/apoydence/talaria/api/v1"
 	"google.golang.org/grpc"
@@ -40,20 +41,24 @@ func (f *FileSystem) Writer(name string) (writer router.Writer, err error) {
 	return nodeWriter{name: name, sender: sender}, nil
 }
 
-func (f *FileSystem) Reader(name string) (reader func() ([]byte, error), err error) {
+func (f *FileSystem) Reader(name string, startIndex uint64) (reader func() (*v1.ReadData, error), err error) {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	rx, err := f.client.Read(ctx, &pb.BufferInfo{Name: name})
+	rx, err := f.client.Read(ctx, &pb.BufferInfo{Name: name, StartIndex: startIndex})
 	if err != nil {
 		return nil, err
 	}
 
-	return func() ([]byte, error) {
+	return func() (*v1.ReadData, error) {
 		packet, err := rx.Recv()
 		if err != nil {
 			return nil, err
 		}
 
-		return packet.Message, nil
+		return &v1.ReadData{
+			Payload: packet.Message,
+			File:    name,
+			Index:   packet.Index,
+		}, nil
 	}, nil
 }
 

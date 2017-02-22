@@ -101,19 +101,27 @@ func TestFileSystemReader(t *testing.T) {
 				Chain(Receive(), Fetch(&rx)),
 			))
 
-			err := rx.Send(&pb.ReadDataPacket{Message: []byte("some-data")})
+			err := rx.Send(&pb.ReadDataPacket{
+				Message: []byte("some-data"),
+				Index:   99,
+			})
 			Expect(t, err == nil).To(BeTrue())
 		}()
 
-		reader, err := t.fs.Reader("some-name")
+		reader, err := t.fs.Reader("some-name", 99)
 		Expect(t, err == nil).To(BeTrue())
 
 		data, err := reader()
 		Expect(t, err == nil).To(BeTrue())
-		Expect(t, data).To(Equal([]byte("some-data")))
+		Expect(t, data.Payload).To(Equal([]byte("some-data")))
+		Expect(t, data.File).To(Equal("some-name"))
+		Expect(t, data.Index).To(Equal(uint64(99)))
 
 		Expect(t, t.mockNodeServer.ReadInput.Arg0).To(ViaPolling(
-			Chain(Receive(), Equal(&pb.BufferInfo{Name: "some-name"})),
+			Chain(Receive(), Equal(&pb.BufferInfo{
+				Name:       "some-name",
+				StartIndex: 99,
+			})),
 		))
 	})
 }

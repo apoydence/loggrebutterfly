@@ -17,10 +17,10 @@ import (
 	"google.golang.org/grpc/grpclog"
 
 	"github.com/apoydence/eachers/testhelpers"
-	"github.com/apoydence/loggrebutterfly/internal/end2end"
 	"github.com/apoydence/loggrebutterfly/api/intra"
 	v2 "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
 	pb "github.com/apoydence/loggrebutterfly/api/v1"
+	"github.com/apoydence/loggrebutterfly/internal/end2end"
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"
@@ -132,7 +132,14 @@ func TestDataNode(t *testing.T) {
 				Chain(Receive(), Fetch(&server)),
 			))
 
-			server.Send(&talariapb.ReadDataPacket{Message: []byte("some-data")})
+			server.Send(&talariapb.ReadDataPacket{
+				Message: []byte("some-data"),
+				Index:   99,
+			})
+			server.Send(&talariapb.ReadDataPacket{
+				Message: []byte("some-other-data"),
+				Index:   101,
+			})
 		}()
 
 		var rx pb.DataNode_ReadClient
@@ -145,6 +152,45 @@ func TestDataNode(t *testing.T) {
 		rxData, err := rx.Recv()
 		Expect(t, err == nil).To(BeTrue())
 		Expect(t, rxData.Payload).To(Equal([]byte("some-data")))
+
+		var rn router.RangeName
+		err = json.Unmarshal([]byte(rxData.File), &rn)
+		Expect(t, err == nil).To(BeTrue())
+		Expect(t, rn.Low).To(Equal(uint64(0)))
+		Expect(t, rn.High).To(Equal(uint64(18446744073709551615)))
+		Expect(t, rxData.Index).To(Equal(uint64(99)))
+
+		rxData, err = rx.Recv()
+		Expect(t, err == nil).To(BeTrue())
+		Expect(t, rxData.Payload).To(Equal([]byte("some-other-data")))
+
+		err = json.Unmarshal([]byte(rxData.File), &rn)
+		Expect(t, err == nil).To(BeTrue())
+		Expect(t, rn.Low).To(Equal(uint64(0)))
+		Expect(t, rn.High).To(Equal(uint64(18446744073709551615)))
+		Expect(t, rxData.Index).To(Equal(uint64(101)))
+	})
+
+	o.Spec("it reads mid-stream", func(t TDN) {
+		file := buildRangeName(0, 18446744073709551615, 0)
+		var rx pb.DataNode_ReadClient
+		f := func() bool {
+			var err error
+			rx, err = t.client.Read(context.Background(), &pb.ReadInfo{
+				Name:  t.fileName,
+				File:  file,
+				Index: 99,
+			})
+			return err == nil
+		}
+		Expect(t, f).To(ViaPolling(BeTrue()))
+
+		Expect(t, mockNode.ReadInput.Arg0).To(ViaPolling(
+			Chain(Receive(), Equal(&talariapb.BufferInfo{
+				Name:       file,
+				StartIndex: 99,
+			})),
+		))
 	})
 }
 

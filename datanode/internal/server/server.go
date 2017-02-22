@@ -14,7 +14,7 @@ type WriteFetcher interface {
 }
 
 type ReadFetcher interface {
-	Reader(name string) (reader func() ([]byte, error), err error)
+	Reader(name string, startIndex uint64) (reader func() (*pb.ReadData, error), err error)
 }
 
 type Server struct {
@@ -63,7 +63,7 @@ func (s *Server) Write(sender pb.DataNode_WriteServer) error {
 }
 
 func (s *Server) Read(info *pb.ReadInfo, server pb.DataNode_ReadServer) error {
-	reader, err := s.reader.Reader(info.Name)
+	reader, err := s.reader.Reader(info.Name, info.Index)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (s *Server) Read(info *pb.ReadInfo, server pb.DataNode_ReadServer) error {
 			return err
 		}
 
-		if err := server.Send(&pb.ReadData{Payload: data}); err != nil {
+		if err := server.Send(data); err != nil {
 			return err
 		}
 	}

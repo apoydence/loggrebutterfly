@@ -14,8 +14,8 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/apoydence/eachers/testhelpers"
-	"github.com/apoydence/loggrebutterfly/datanode/internal/server"
 	pb "github.com/apoydence/loggrebutterfly/api/v1"
+	"github.com/apoydence/loggrebutterfly/datanode/internal/server"
 
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
@@ -93,7 +93,8 @@ func TestServer(t *testing.T) {
 		t.mockReadFetcher.ReaderOutput.Reader <- buildDataF("A", "B", "C")
 
 		resp, err := t.client.Read(context.Background(), &pb.ReadInfo{
-			Name: "some-name",
+			Name:  "some-name",
+			Index: 99,
 		})
 		Expect(t, err == nil).To(BeTrue())
 
@@ -101,17 +102,33 @@ func TestServer(t *testing.T) {
 			Chain(Receive(), Equal("some-name")),
 		))
 
+		Expect(t, t.mockReadFetcher.ReaderInput.StartIndex).To(ViaPolling(
+			Chain(Receive(), Equal(uint64(99))),
+		))
+
 		data, err := resp.Recv()
 		Expect(t, err == nil).To(BeTrue())
-		Expect(t, data).To(Equal(&pb.ReadData{Payload: []byte("A")}))
+		Expect(t, data).To(Equal(&pb.ReadData{
+			Payload: []byte("A"),
+			File:    "A",
+			Index:   0,
+		}))
 
 		data, err = resp.Recv()
 		Expect(t, err == nil).To(BeTrue())
-		Expect(t, data).To(Equal(&pb.ReadData{Payload: []byte("B")}))
+		Expect(t, data).To(Equal(&pb.ReadData{
+			Payload: []byte("B"),
+			File:    "B",
+			Index:   1,
+		}))
 
 		data, err = resp.Recv()
 		Expect(t, err == nil).To(BeTrue())
-		Expect(t, data).To(Equal(&pb.ReadData{Payload: []byte("C")}))
+		Expect(t, data).To(Equal(&pb.ReadData{
+			Payload: []byte("C"),
+			File:    "C",
+			Index:   2,
+		}))
 
 		_, err = resp.Recv()
 		Expect(t, err == nil).To(BeFalse())
@@ -126,17 +143,30 @@ func fetchClient(addr string) pb.DataNodeClient {
 	return pb.NewDataNodeClient(conn)
 }
 
-func buildDataF(data ...string) func() ([]byte, error) {
+func buildDataF(data ...string) func() (*pb.ReadData, error) {
 	d := make(chan []byte, len(data)+1)
+	f := make(chan string, len(data)+1)
+	i := make(chan uint64, len(data)+1)
 	e := make(chan error, len(data)+1)
+
+	var j uint64
 	for _, x := range data {
 		d <- []byte(x)
 		e <- nil
+		f <- x
+		i <- j
+		j++
 	}
 	d <- nil
 	e <- io.EOF
+	f <- ""
+	i <- 0
 
-	return func() ([]byte, error) {
-		return <-d, <-e
+	return func() (*pb.ReadData, error) {
+		return &pb.ReadData{
+			Payload: <-d,
+			File:    <-f,
+			Index:   <-i,
+		}, <-e
 	}
 }

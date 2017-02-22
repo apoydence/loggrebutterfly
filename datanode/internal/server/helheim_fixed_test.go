@@ -5,6 +5,10 @@
 
 package server_test
 
+import (
+	pb "github.com/apoydence/loggrebutterfly/api/v1"
+)
+
 type mockWriteFetcher struct {
 	WriterCalled chan bool
 	WriterOutput struct {
@@ -28,10 +32,11 @@ func (m *mockWriteFetcher) Writer() (writer func(data []byte) (err error), err e
 type mockReadFetcher struct {
 	ReaderCalled chan bool
 	ReaderInput  struct {
-		Name chan string
+		Name       chan string
+		StartIndex chan uint64
 	}
 	ReaderOutput struct {
-		Reader chan func() ([]byte, error)
+		Reader chan func() (*pb.ReadData, error)
 		Err    chan error
 	}
 }
@@ -40,12 +45,14 @@ func newMockReadFetcher() *mockReadFetcher {
 	m := &mockReadFetcher{}
 	m.ReaderCalled = make(chan bool, 100)
 	m.ReaderInput.Name = make(chan string, 100)
-	m.ReaderOutput.Reader = make(chan func() ([]byte, error), 100)
+	m.ReaderInput.StartIndex = make(chan uint64, 100)
+	m.ReaderOutput.Reader = make(chan func() (*pb.ReadData, error), 100)
 	m.ReaderOutput.Err = make(chan error, 100)
 	return m
 }
-func (m *mockReadFetcher) Reader(name string) (reader func() ([]byte, error), err error) {
+func (m *mockReadFetcher) Reader(name string, startIndex uint64) (reader func() (*pb.ReadData, error), err error) {
 	m.ReaderCalled <- true
 	m.ReaderInput.Name <- name
+	m.ReaderInput.StartIndex <- startIndex
 	return <-m.ReaderOutput.Reader, <-m.ReaderOutput.Err
 }
