@@ -59,14 +59,14 @@ func (f *FileSystem) Writer(name string) (writer router.Writer, err error) {
 	return wrapper, nil
 }
 
-func (f *FileSystem) Reader(name string) (reader reader.Reader, err error) {
+func (f *FileSystem) Reader(name string, startingIndex uint64) (reader reader.Reader, err error) {
 	client, addr := f.cache.FetchRoute(name)
 	if client == nil {
 		return nil, fmt.Errorf("unknown file: %s", name)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	rx, err := client.Read(ctx, &pb.ReadInfo{Name: name})
+	rx, err := client.Read(ctx, &pb.ReadInfo{Name: name, Index: startingIndex})
 	if err != nil {
 		return nil, err
 	}
@@ -106,17 +106,21 @@ type receiverWrapper struct {
 	cancel func()
 }
 
-func (w *receiverWrapper) Read() ([]byte, error) {
+func (w *receiverWrapper) Read() (reader.DataPacket, error) {
 	data, err := w.rx.Recv()
 	if err != nil && grpc.ErrorDesc(err) == "EOF" {
-		return nil, io.EOF
+		return reader.DataPacket{}, io.EOF
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("[READ FROM %s]: %s", w.addr, err)
+		return reader.DataPacket{}, fmt.Errorf("[READ FROM %s]: %s", w.addr, err)
 	}
 
-	return data.Payload, nil
+	return reader.DataPacket{
+		Payload:  data.Payload,
+		Filename: data.File,
+		Index:    data.Index,
+	}, nil
 }
 
 func (w *receiverWrapper) Close() {

@@ -16,8 +16,7 @@ message WriteResponse {
 
 message ReadInfo {
   string name = 1;
-  string file = 2;
-  uint64 index = 3;
+  uint64 index = 2;
 }
 
 message ReadData {

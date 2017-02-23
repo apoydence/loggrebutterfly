@@ -98,18 +98,19 @@ func TestMaster(t *testing.T) {
 			Matcher:  BeTrue(),
 		})
 
-		client := client.New(fmt.Sprintf("127.0.0.1:%d", masterPort))
+		c := client.New(fmt.Sprintf("127.0.0.1:%d", masterPort))
 
 		e := &v2.Envelope{
-			SourceId: "some-id",
-			Timestamp:  99,
+			SourceId:  "some-id",
+			Timestamp: 99,
 		}
 
-		reader := client.ReadFrom("some-id")
+		reader, err := c.ReadFrom("some-id")
+		Expect(t, err == nil).To(BeTrue())
 
-		var rxEnvelope *v2.Envelope
+		var rxEnvelope client.DataPacket
 		f = func() bool {
-			err := client.Write(e)
+			err := c.Write(e)
 			if err != nil {
 				return false
 			}
@@ -121,7 +122,8 @@ func TestMaster(t *testing.T) {
 			Duration: 3 * time.Second,
 			Matcher:  BeTrue(),
 		})
-		Expect(t, rxEnvelope).To(Equal(e))
+		Expect(t, rxEnvelope.Envelope).To(Equal(e))
+		Expect(t, rxEnvelope.Filename).To(Not(HaveLen(0)))
 
 		analyst := fetchAnalystClient(analystPorts[0])
 		var queryResp *pb.QueryResponse

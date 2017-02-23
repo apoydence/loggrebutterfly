@@ -14,8 +14,8 @@ import (
 	"google.golang.org/grpc/grpclog"
 
 	"github.com/apoydence/eachers/testhelpers"
-	"github.com/apoydence/loggrebutterfly/client/internal/filesystem"
 	pb "github.com/apoydence/loggrebutterfly/api/v1"
+	"github.com/apoydence/loggrebutterfly/client/internal/filesystem"
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"
@@ -161,7 +161,7 @@ func TestFileSystemReader(t *testing.T) {
 		})
 
 		o.Spec("it converts it to an io EOF", func(t TFS) {
-			reader, err := t.fs.Reader("some-name-b")
+			reader, err := t.fs.Reader("some-name-b", 99)
 			Expect(t, err == nil).To(BeTrue())
 
 			_, err = reader.Read()
@@ -184,20 +184,29 @@ func TestFileSystemReader(t *testing.T) {
 					Chain(Receive(), Fetch(&rx)),
 				))
 
-				err := rx.Send(&pb.ReadData{Payload: []byte("some-data")})
+				err := rx.Send(&pb.ReadData{
+					Payload: []byte("some-data"),
+					File:    "file-a",
+					Index:   101,
+				})
 				Expect(t, err == nil).To(BeTrue())
 			}()
 
-			reader, err := t.fs.Reader("some-name-b")
+			reader, err := t.fs.Reader("some-name-b", 99)
 			Expect(t, err == nil).To(BeTrue())
 
 			Expect(t, t.mockDataNodeServers[1].ReadInput.Arg0).To(ViaPolling(
-				Chain(Receive(), Equal(&pb.ReadInfo{Name: "some-name-b"})),
+				Chain(Receive(), Equal(&pb.ReadInfo{
+					Name:  "some-name-b",
+					Index: 99,
+				})),
 			))
 
 			data, err := reader.Read()
 			Expect(t, err == nil).To(BeTrue())
-			Expect(t, data).To(Equal([]byte("some-data")))
+			Expect(t, data.Payload).To(Equal([]byte("some-data")))
+			Expect(t, data.Filename).To(Equal("file-a"))
+			Expect(t, data.Index).To(Equal(uint64(101)))
 		})
 	})
 }

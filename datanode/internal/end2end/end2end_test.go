@@ -169,16 +169,12 @@ func TestDataNode(t *testing.T) {
 		Expect(t, rn.Low).To(Equal(uint64(0)))
 		Expect(t, rn.High).To(Equal(uint64(18446744073709551615)))
 		Expect(t, rxData.Index).To(Equal(uint64(101)))
-	})
 
-	o.Spec("it reads mid-stream", func(t TDN) {
 		file := buildRangeName(0, 18446744073709551615, 0)
-		var rx pb.DataNode_ReadClient
-		f := func() bool {
+		f = func() bool {
 			var err error
 			rx, err = t.client.Read(context.Background(), &pb.ReadInfo{
 				Name:  t.fileName,
-				File:  file,
 				Index: 99,
 			})
 			return err == nil
