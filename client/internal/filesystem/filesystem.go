@@ -71,7 +71,7 @@ func (f *FileSystem) Reader(name string, startingIndex uint64) (reader reader.Re
 		return nil, err
 	}
 
-	return &receiverWrapper{rx: rx, cancel: cancel, addr: addr}, nil
+	return &receiverWrapper{rx: rx, cancel: cancel, addr: addr, resetCache: f.cache.Reset}, nil
 }
 
 type senderWrapper struct {
@@ -101,18 +101,21 @@ func (w *senderWrapper) Close() {
 }
 
 type receiverWrapper struct {
-	addr   string
-	rx     pb.DataNode_ReadClient
-	cancel func()
+	addr       string
+	rx         pb.DataNode_ReadClient
+	cancel     func()
+	resetCache func()
 }
 
 func (w *receiverWrapper) Read() (reader.DataPacket, error) {
 	data, err := w.rx.Recv()
 	if err != nil && grpc.ErrorDesc(err) == "EOF" {
+		w.resetCache()
 		return reader.DataPacket{}, io.EOF
 	}
 
 	if err != nil {
+		w.resetCache()
 		return reader.DataPacket{}, fmt.Errorf("[READ FROM %s]: %s", w.addr, err)
 	}
 

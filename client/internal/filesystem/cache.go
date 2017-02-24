@@ -94,6 +94,10 @@ func (c *Cache) setupRoutes() error {
 	c.routes = make(map[string]clientInfo)
 
 	for _, file := range files {
+		if file.Leader == "" {
+			log.Printf("%s buffer does not have leader", file.Name)
+			continue
+		}
 		c.routes[file.Name] = setupDataClient(file.Leader)
 	}
 

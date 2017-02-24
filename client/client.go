@@ -44,27 +44,16 @@ func (c *Client) Write(e *v2.Envelope) error {
 	return c.router.Write(data)
 }
 
-type ReadFromOption func(c *readConf)
-
 type DataPacket struct {
 	Envelope *v2.Envelope
 	Filename string
 	Index    uint64
 }
 
-func (c *Client) ReadFrom(sourceID string, opts ...ReadFromOption) (func() (DataPacket, error), error) {
-	var conf readConf
-	for _, o := range opts {
-		o(&conf)
-	}
-
+func (c *Client) ReadFrom(sourceID string) (func() (DataPacket, error), error) {
 	hash := c.hasher.HashString(sourceID)
 
-	r, err := c.fetchReader(conf.startFileName, hash, conf.startIndex)
-	if err != nil {
-		return nil, err
-	}
-
+	r := c.reader.ReadFrom(hash)
 	return func() (DataPacket, error) {
 		for {
 			data, err := r.Read()
@@ -92,29 +81,4 @@ func (c *Client) ReadFrom(sourceID string, opts ...ReadFromOption) (func() (Data
 			}, nil
 		}
 	}, nil
-}
-
-type readConf struct {
-	startFileName string
-	startIndex    uint64
-}
-
-func WithStartingFileName(fileName string) ReadFromOption {
-	return func(c *readConf) {
-		c.startFileName = fileName
-	}
-}
-
-func WithStartingIndex(startIndex uint64) ReadFromOption {
-	return func(c *readConf) {
-		c.startIndex = startIndex
-	}
-}
-
-func (c *Client) fetchReader(fileName string, hash, startingIndex uint64) (reader.Reader, error) {
-	if fileName == "" {
-		return c.reader.ReadFrom(hash), nil
-	}
-
-	return c.reader.ReadFromMidStream(hash, fileName, startingIndex)
 }
