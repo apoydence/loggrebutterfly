@@ -35,7 +35,7 @@ func (c *Cache) FetchRoute(name string) (client pb.DataNodeClient, addr string) 
 }
 
 func (c *Cache) Reset() {
-	log.Printf("Resting route cache...")
+	log.Printf("Resetting route cache...")
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
