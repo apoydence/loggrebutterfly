@@ -140,12 +140,11 @@ func TestAnalystAggregate(t *testing.T) {
 							Start: 10,
 							End:   20,
 						},
-					},
-				},
-
-				Aggregation: &loggrebutterfly.AggregateInfo_Counter{
-					Counter: &loggrebutterfly.CounterAggregation{
-						Name: "some-name",
+						Envelopes: &loggrebutterfly.AnalystFilter_Counter{
+							Counter: &loggrebutterfly.CounterFilter{
+								Name: "some-name",
+							},
+						},
 					},
 				},
 			})

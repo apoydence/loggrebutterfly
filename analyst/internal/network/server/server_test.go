@@ -176,10 +176,10 @@ func TestServerAggregate(t *testing.T) {
 				Query: &v1.QueryInfo{
 					Filter: &v1.AnalystFilter{
 						SourceId: "some-id",
+						Envelopes: &v1.AnalystFilter_Counter{
+							Counter: &v1.CounterFilter{Name: "some-name"},
+						},
 					},
-				},
-				Aggregation: &v1.AggregateInfo_Counter{
-					Counter: &v1.CounterAggregation{Name: "some-name"},
 				},
 				BucketWidthNs: 2,
 			})
@@ -192,11 +192,14 @@ func TestServerAggregate(t *testing.T) {
 
 		o.Spec("it returns an error if an ID is not given", func(t TS) {
 			_, err := t.s.Aggregate(context.Background(), &v1.AggregateInfo{
-				Query:         &v1.QueryInfo{},
-				BucketWidthNs: 2,
-				Aggregation: &v1.AggregateInfo_Counter{
-					Counter: &v1.CounterAggregation{Name: "some-name"},
+				Query: &v1.QueryInfo{
+					Filter: &v1.AnalystFilter{
+						Envelopes: &v1.AnalystFilter_Counter{
+							Counter: &v1.CounterFilter{Name: "some-name"},
+						},
+					},
 				},
+				BucketWidthNs: 2,
 			})
 			Expect(t, err == nil).To(BeFalse())
 		})
@@ -218,10 +221,10 @@ func TestServerAggregate(t *testing.T) {
 				Query: &v1.QueryInfo{
 					Filter: &v1.AnalystFilter{
 						SourceId: "some-id",
+						Envelopes: &v1.AnalystFilter_Counter{
+							Counter: &v1.CounterFilter{Name: "some-name"},
+						},
 					},
-				},
-				Aggregation: &v1.AggregateInfo_Counter{
-					Counter: &v1.CounterAggregation{Name: "some-name"},
 				},
 			})
 			Expect(t, err == nil).To(BeFalse())
@@ -235,12 +238,12 @@ func TestServerAggregate(t *testing.T) {
 						Start: 99,
 						End:   101,
 					},
+					Envelopes: &v1.AnalystFilter_Counter{
+						Counter: &v1.CounterFilter{Name: "some-name"},
+					},
 				},
 			},
 				BucketWidthNs: 2,
-				Aggregation: &v1.AggregateInfo_Counter{
-					Counter: &v1.CounterAggregation{Name: "some-name"},
-				},
 			})
 
 			Expect(t, t.mockCalc.CalculateInput.Route).To(
@@ -259,12 +262,12 @@ func TestServerAggregate(t *testing.T) {
 						Start: 99,
 						End:   101,
 					},
+					Envelopes: &v1.AnalystFilter_Counter{
+						Counter: &v1.CounterFilter{Name: "some-name"},
+					},
 				},
 			},
 				BucketWidthNs: 2,
-				Aggregation: &v1.AggregateInfo_Counter{
-					Counter: &v1.CounterAggregation{Name: "some-name"},
-				},
 			}
 			t.s.Aggregate(context.Background(), info)
 
@@ -292,12 +295,12 @@ func TestServerAggregate(t *testing.T) {
 						Start: 99,
 						End:   101,
 					},
+					Envelopes: &v1.AnalystFilter_Counter{
+						Counter: &v1.CounterFilter{Name: "some-name"},
+					},
 				},
 			},
 				BucketWidthNs: 2,
-				Aggregation: &v1.AggregateInfo_Counter{
-					Counter: &v1.CounterAggregation{Name: "some-name"},
-				},
 			})
 			Expect(t, err == nil).To(BeFalse())
 		})

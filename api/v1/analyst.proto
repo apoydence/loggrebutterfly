@@ -16,21 +16,6 @@ message QueryInfo {
 message AggregateInfo {
   QueryInfo query = 1;
   int64 bucket_width_ns = 2;
-
-  oneof Aggregation {
-    CounterAggregation counter = 3;
-  }
-}
-
-message AnalystFilter {
-  string source_id = 1;
-  TimeRange time_range = 2;
-}
-
-// [start, end)
-message TimeRange {
-  int64 start = 1;
-  int64 end = 2;
 }
 
 message QueryResponse {
@@ -41,6 +26,21 @@ message AggregateResponse {
   map<int64, double> results = 1;
 }
 
-message CounterAggregation {
+message AnalystFilter {
+  string source_id = 1;
+  TimeRange time_range = 2;
+
+  oneof Envelopes {
+    CounterFilter counter = 3;
+  }
+}
+
+// [start, end)
+message TimeRange {
+  int64 start = 1;
+  int64 end = 2;
+}
+
+message CounterFilter {
   string name = 1;
 }

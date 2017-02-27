@@ -26,7 +26,7 @@ func (a Aggregation) Map(value []byte) (key string, output []byte, err error) {
 	}
 
 	c := e.GetCounter()
-	if c == nil || c.Name != a.info.GetCounter().GetName() {
+	if c == nil || c.Name != a.info.GetQuery().GetFilter().GetCounter().GetName() {
 		return "", nil, nil
 	}
 

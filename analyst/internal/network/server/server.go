@@ -53,8 +53,8 @@ func (s *Server) Aggregate(ctx context.Context, info *v1.AggregateInfo) (resp *v
 		return nil, fmt.Errorf("a source_id is required")
 	}
 
-	if info.Aggregation == nil {
-		return nil, fmt.Errorf("a aggregation is required")
+	if info.GetQuery().GetFilter().Envelopes == nil {
+		return nil, fmt.Errorf("a envelope filter is required")
 	}
 
 	if info.BucketWidthNs == 0 {

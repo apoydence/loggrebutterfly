@@ -33,11 +33,11 @@ func TestAggregation(t *testing.T) {
 						Start: 99,
 						End:   101,
 					},
-				},
-			},
-			Aggregation: &v1.AggregateInfo_Counter{
-				Counter: &v1.CounterAggregation{
-					Name: "some-name",
+					Envelopes: &v1.AnalystFilter_Counter{
+						Counter: &v1.CounterFilter{
+							Name: "some-name",
+						},
+					},
 				},
 			},
 		}
