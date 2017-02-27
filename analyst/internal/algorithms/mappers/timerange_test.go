@@ -37,10 +37,12 @@ func TestTimerange(t *testing.T) {
 
 	o.BeforeEach(func(t *testing.T) TTR {
 		req := &v1.QueryInfo{
-			SourceId: "some-id",
-			TimeRange: &v1.TimeRange{
-				Start: 99,
-				End:   101,
+			Filter: &v1.AnalystFilter{
+				SourceId: "some-id",
+				TimeRange: &v1.TimeRange{
+					Start: 99,
+					End:   101,
+				},
 			},
 		}
 		return TTR{

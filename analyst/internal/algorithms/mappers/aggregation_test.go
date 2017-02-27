@@ -27,10 +27,12 @@ func TestAggregation(t *testing.T) {
 		req := &v1.AggregateInfo{
 			BucketWidthNs: 2,
 			Query: &v1.QueryInfo{
-				SourceId: "some-id",
-				TimeRange: &v1.TimeRange{
-					Start: 99,
-					End:   101,
+				Filter: &v1.AnalystFilter{
+					SourceId: "some-id",
+					TimeRange: &v1.TimeRange{
+						Start: 99,
+						End:   101,
+					},
 				},
 			},
 			Aggregation: &v1.AggregateInfo_Counter{

@@ -130,10 +130,12 @@ func TestMaster(t *testing.T) {
 		f = func() bool {
 			var err error
 			queryResp, err = analyst.Query(context.Background(), &pb.QueryInfo{
-				SourceId: "some-id",
-				TimeRange: &pb.TimeRange{
-					Start: 99,
-					End:   10000,
+				Filter: &pb.AnalystFilter{
+					SourceId: "some-id",
+					TimeRange: &pb.TimeRange{
+						Start: 99,
+						End:   10000,
+					},
 				},
 			})
 

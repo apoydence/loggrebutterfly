@@ -90,6 +90,7 @@ func (w *senderWrapper) Write(data []byte) error {
 	if err != nil {
 		w.err = err
 		w.reset()
+
 		return fmt.Errorf("[WRITE TO %s]: %s", w.addr, w.err)
 	}
 

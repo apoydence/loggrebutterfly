@@ -86,10 +86,12 @@ func TestAnalystQuery(t *testing.T) {
 			var err error
 			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 			results, err = t.client.Query(ctx, &loggrebutterfly.QueryInfo{
-				SourceId: "some-id",
-				TimeRange: &loggrebutterfly.TimeRange{
-					Start: 10,
-					End:   20,
+				Filter: &loggrebutterfly.AnalystFilter{
+					SourceId: "some-id",
+					TimeRange: &loggrebutterfly.TimeRange{
+						Start: 10,
+						End:   20,
+					},
 				},
 			})
 			return err == nil
@@ -132,10 +134,12 @@ func TestAnalystAggregate(t *testing.T) {
 			results, err = t.client.Aggregate(ctx, &loggrebutterfly.AggregateInfo{
 				BucketWidthNs: 5,
 				Query: &loggrebutterfly.QueryInfo{
-					SourceId: "some-id",
-					TimeRange: &loggrebutterfly.TimeRange{
-						Start: 10,
-						End:   20,
+					Filter: &loggrebutterfly.AnalystFilter{
+						SourceId: "some-id",
+						TimeRange: &loggrebutterfly.TimeRange{
+							Start: 10,
+							End:   20,
+						},
 					},
 				},
 

@@ -67,7 +67,11 @@ func TestServerQuery(t *testing.T) {
 		})
 
 		o.Spec("it uses the calculator and returns the results", func(t TS) {
-			resp, err := t.s.Query(context.Background(), &v1.QueryInfo{SourceId: "id"})
+			resp, err := t.s.Query(context.Background(), &v1.QueryInfo{
+				Filter: &v1.AnalystFilter{
+					SourceId: "id",
+				},
+			})
 			Expect(t, err == nil).To(BeTrue())
 
 			Expect(t, resp.Envelopes).To(HaveLen(2))
@@ -88,10 +92,13 @@ func TestServerQuery(t *testing.T) {
 		})
 
 		o.Spec("it uses the expected info for the calculator", func(t TS) {
-			t.s.Query(context.Background(), &v1.QueryInfo{SourceId: "id", TimeRange: &v1.TimeRange{
-				Start: 99,
-				End:   101,
-			}})
+			t.s.Query(context.Background(), &v1.QueryInfo{
+				Filter: &v1.AnalystFilter{
+					SourceId: "id", TimeRange: &v1.TimeRange{
+						Start: 99,
+						End:   101,
+					},
+				}})
 
 			Expect(t, t.mockCalc.CalculateInput.Route).To(
 				Chain(Receive(), Equal("id")),
@@ -102,10 +109,13 @@ func TestServerQuery(t *testing.T) {
 		})
 
 		o.Spec("it includes the request in the meta", func(t TS) {
-			info := &v1.QueryInfo{SourceId: "id", TimeRange: &v1.TimeRange{
-				Start: 99,
-				End:   101,
-			}}
+			info := &v1.QueryInfo{
+				Filter: &v1.AnalystFilter{
+					SourceId: "id", TimeRange: &v1.TimeRange{
+						Start: 99,
+						End:   101,
+					},
+				}}
 			t.s.Query(context.Background(), info)
 
 			marshelled, err := proto.Marshal(&v1.AggregateInfo{Query: info})
@@ -125,7 +135,11 @@ func TestServerQuery(t *testing.T) {
 		})
 
 		o.Spec("it returns an error", func(t TS) {
-			_, err := t.s.Query(context.Background(), &v1.QueryInfo{SourceId: "id"})
+			_, err := t.s.Query(context.Background(), &v1.QueryInfo{
+				Filter: &v1.AnalystFilter{
+					SourceId: "id",
+				},
+			})
 			Expect(t, err == nil).To(BeFalse())
 		})
 	})
@@ -160,7 +174,9 @@ func TestServerAggregate(t *testing.T) {
 		o.Spec("it uses the calculator and returns the results", func(t TS) {
 			resp, err := t.s.Aggregate(context.Background(), &v1.AggregateInfo{
 				Query: &v1.QueryInfo{
-					SourceId: "some-id",
+					Filter: &v1.AnalystFilter{
+						SourceId: "some-id",
+					},
 				},
 				Aggregation: &v1.AggregateInfo_Counter{
 					Counter: &v1.CounterAggregation{Name: "some-name"},
@@ -188,14 +204,22 @@ func TestServerAggregate(t *testing.T) {
 		o.Spec("it returns an error if an aggregation is not given", func(t TS) {
 			_, err := t.s.Aggregate(context.Background(), &v1.AggregateInfo{
 				BucketWidthNs: 2,
-				Query:         &v1.QueryInfo{SourceId: "some-id"},
+				Query: &v1.QueryInfo{
+					Filter: &v1.AnalystFilter{
+						SourceId: "some-id",
+					},
+				},
 			})
 			Expect(t, err == nil).To(BeFalse())
 		})
 
 		o.Spec("it returns an error if an bucket widtch is not given", func(t TS) {
 			_, err := t.s.Aggregate(context.Background(), &v1.AggregateInfo{
-				Query: &v1.QueryInfo{SourceId: "some-id"},
+				Query: &v1.QueryInfo{
+					Filter: &v1.AnalystFilter{
+						SourceId: "some-id",
+					},
+				},
 				Aggregation: &v1.AggregateInfo_Counter{
 					Counter: &v1.CounterAggregation{Name: "some-name"},
 				},
@@ -205,10 +229,12 @@ func TestServerAggregate(t *testing.T) {
 
 		o.Spec("it uses the expected info for the calculator", func(t TS) {
 			t.s.Aggregate(context.Background(), &v1.AggregateInfo{Query: &v1.QueryInfo{
-				SourceId: "id",
-				TimeRange: &v1.TimeRange{
-					Start: 99,
-					End:   101,
+				Filter: &v1.AnalystFilter{
+					SourceId: "id",
+					TimeRange: &v1.TimeRange{
+						Start: 99,
+						End:   101,
+					},
 				},
 			},
 				BucketWidthNs: 2,
@@ -227,10 +253,12 @@ func TestServerAggregate(t *testing.T) {
 
 		o.Spec("it includes the request in the meta", func(t TS) {
 			info := &v1.AggregateInfo{Query: &v1.QueryInfo{
-				SourceId: "id",
-				TimeRange: &v1.TimeRange{
-					Start: 99,
-					End:   101,
+				Filter: &v1.AnalystFilter{
+					SourceId: "id",
+					TimeRange: &v1.TimeRange{
+						Start: 99,
+						End:   101,
+					},
 				},
 			},
 				BucketWidthNs: 2,
@@ -258,10 +286,12 @@ func TestServerAggregate(t *testing.T) {
 
 		o.Spec("it returns an error", func(t TS) {
 			_, err := t.s.Aggregate(context.Background(), &v1.AggregateInfo{Query: &v1.QueryInfo{
-				SourceId: "id",
-				TimeRange: &v1.TimeRange{
-					Start: 99,
-					End:   101,
+				Filter: &v1.AnalystFilter{
+					SourceId: "id",
+					TimeRange: &v1.TimeRange{
+						Start: 99,
+						End:   101,
+					},
 				},
 			},
 				BucketWidthNs: 2,

@@ -33,8 +33,9 @@ func marshalAndFilter(value []byte, info *v1.QueryInfo) (*loggregator.Envelope, 
 		return nil, err
 	}
 
-	if info.SourceId != e.SourceId ||
-		(e.Timestamp < info.TimeRange.Start || e.Timestamp >= info.TimeRange.End) {
+	if info.GetFilter().GetSourceId() != e.SourceId ||
+		(e.Timestamp < info.GetFilter().GetTimeRange().Start ||
+			e.Timestamp >= info.GetFilter().GetTimeRange().GetEnd()) {
 		return nil, nil
 	}
 

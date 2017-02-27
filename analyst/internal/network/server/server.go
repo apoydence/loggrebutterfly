@@ -29,7 +29,7 @@ func New(c Calculator) *Server {
 }
 
 func (s *Server) Query(ctx context.Context, info *v1.QueryInfo) (resp *v1.QueryResponse, err error) {
-	if info.SourceId == "" {
+	if info.GetFilter().GetSourceId() == "" {
 		return nil, fmt.Errorf("a source_id is required")
 	}
 
@@ -38,7 +38,7 @@ func (s *Server) Query(ctx context.Context, info *v1.QueryInfo) (resp *v1.QueryR
 		return nil, err
 	}
 
-	result, err := s.calc.Calculate(info.SourceId, "timerange", ctx, data)
+	result, err := s.calc.Calculate(info.GetFilter().GetSourceId(), "timerange", ctx, data)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (s *Server) Query(ctx context.Context, info *v1.QueryInfo) (resp *v1.QueryR
 }
 
 func (s *Server) Aggregate(ctx context.Context, info *v1.AggregateInfo) (resp *v1.AggregateResponse, err error) {
-	if info.GetQuery().SourceId == "" {
+	if info.GetQuery().GetFilter().GetSourceId() == "" {
 		return nil, fmt.Errorf("a source_id is required")
 	}
 
@@ -66,7 +66,7 @@ func (s *Server) Aggregate(ctx context.Context, info *v1.AggregateInfo) (resp *v
 		return nil, err
 	}
 
-	result, err := s.calc.Calculate(info.GetQuery().SourceId, "aggregation", ctx, data)
+	result, err := s.calc.Calculate(info.GetQuery().GetFilter().GetSourceId(), "aggregation", ctx, data)
 	if err != nil {
 		return nil, err
 	}
