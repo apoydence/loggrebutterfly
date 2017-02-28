@@ -10,26 +10,24 @@ import (
 )
 
 type Aggregation struct {
-	info *v1.AggregateInfo
+	info   *v1.AggregateInfo
+	filter Filter
 }
 
-func NewAggregation(info *v1.AggregateInfo) Aggregation {
+func NewAggregation(info *v1.AggregateInfo, filter Filter) Aggregation {
 	return Aggregation{
-		info: info,
+		info:   info,
+		filter: filter,
 	}
 }
 
 func (a Aggregation) Map(value []byte) (key string, output []byte, err error) {
-	e, err := marshalAndFilter(value, a.info.GetQuery())
+	e, err := marshalAndFilter(value, a.filter)
 	if err != nil || e == nil {
 		return "", nil, err
 	}
 
 	c := e.GetCounter()
-	if c == nil || c.Name != a.info.GetQuery().GetFilter().GetCounter().GetName() {
-		return "", nil, nil
-	}
-
 	t := time.Unix(0, e.Timestamp).
 		Truncate(time.Duration(a.info.BucketWidthNs)).
 		UnixNano()

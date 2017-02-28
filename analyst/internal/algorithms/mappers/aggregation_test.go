@@ -15,7 +15,8 @@ import (
 
 type TA struct {
 	*testing.T
-	agg mappers.Aggregation
+	mockFilter *mockFilter
+	agg        mappers.Aggregation
 }
 
 func TestAggregation(t *testing.T) {
@@ -41,59 +42,32 @@ func TestAggregation(t *testing.T) {
 				},
 			},
 		}
+
+		mockFilter := newMockFilter()
+
 		return TA{
-			T:   t,
-			agg: mappers.NewAggregation(req),
+			T:          t,
+			agg:        mappers.NewAggregation(req, mockFilter),
+			mockFilter: mockFilter,
 		}
 	})
 
-	o.Spec("it only returns envelopes that have the correct source ID", func(t TA) {
-		e1 := buildCounter("some-name", "wrong", 98)
-		e2 := buildCounter("some-name", "some-id", 99)
-
-		key, _, err := t.agg.Map(e1)
-		Expect(t, err == nil).To(BeTrue())
-		Expect(t, key).To(HaveLen(0))
-
-		key, _, err = t.agg.Map(e2)
-		Expect(t, err == nil).To(BeTrue())
-		Expect(t, key).To(Not(HaveLen(0)))
-	})
-
-	o.Spec("it filters out envelopes that are outside the time range or the wrong name", func(t TA) {
-		e1 := buildCounter("some-name", "some-id", 98)
-		e2 := buildCounter("some-name", "some-id", 99)
-		e3 := buildCounter("some-name", "some-id", 100)
-		e4 := buildCounter("some-name", "some-id", 101)
-		e5 := buildCounter("wrong", "some-id", 99)
-		e6 := marshalEnvelope(&loggregator.Envelope{SourceId: "some-id", Timestamp: 99})
-
-		key, _, _ := t.agg.Map(e1)
-		Expect(t, key).To(HaveLen(0))
-
-		key, _, _ = t.agg.Map(e2)
-		Expect(t, key).To(Equal("98"))
-
-		key, _, _ = t.agg.Map(e3)
-		Expect(t, key).To(Equal("100"))
-
-		key, _, _ = t.agg.Map(e4)
-		Expect(t, key).To(HaveLen(0))
-
-		key, _, _ = t.agg.Map(e5)
-		Expect(t, key).To(HaveLen(0))
-
-		key, _, _ = t.agg.Map(e6)
-		Expect(t, key).To(HaveLen(0))
-	})
-
 	o.Spec("it uses the truncated timestamp as a key", func(t TA) {
+		t.mockFilter.FilterOutput.Keep <- true
 		e := buildCounter("some-name", "some-id", 99)
 		key, _, _ := t.agg.Map(e)
 		Expect(t, key).To(Equal("98"))
 	})
 
+	o.Spec("it uses an empty key for filtered out envelopes", func(t TA) {
+		t.mockFilter.FilterOutput.Keep <- false
+		e := marshalEnvelope(&loggregator.Envelope{SourceId: "some-id", Timestamp: 99})
+		key, _, _ := t.agg.Map(e)
+		Expect(t, key).To(HaveLen(0))
+	})
+
 	o.Spec("it returns a float64 as a value", func(t TA) {
+		t.mockFilter.FilterOutput.Keep <- true
 		e := buildCounter("some-name", "some-id", 99)
 		_, value, _ := t.agg.Map(e)
 		bits := binary.LittleEndian.Uint64(value)

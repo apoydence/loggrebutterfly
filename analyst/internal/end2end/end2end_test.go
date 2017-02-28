@@ -110,6 +110,42 @@ func TestAnalystQuery(t *testing.T) {
 			Expect(t, e.Timestamp).To(Equal(int64(i + 10)))
 		}
 	})
+
+	o.Spec("it returns only the envelopes for the correct counter name", func(t TA) {
+		var results *loggrebutterfly.QueryResponse
+		f := func() bool {
+			var err error
+			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+			results, err = t.client.Query(ctx, &loggrebutterfly.QueryInfo{
+				Filter: &loggrebutterfly.AnalystFilter{
+					SourceId: "some-id",
+					TimeRange: &loggrebutterfly.TimeRange{
+						Start: 0,
+						End:   9223372036854775807,
+					},
+					Envelopes: &loggrebutterfly.AnalystFilter_Counter{
+						Counter: &loggrebutterfly.CounterFilter{
+							Name: "some-name-0",
+						},
+					},
+				},
+			})
+			return err == nil
+		}
+
+		Expect(t, f).To(ViaPollingMatcher{
+			Duration: 5 * time.Second,
+			Matcher:  BeTrue(),
+		})
+
+		sort.Sort(envelopes(results.Envelopes))
+
+		Expect(t, results.Envelopes).To(HaveLen(50))
+		for i, e := range results.Envelopes {
+			Expect(t, e.SourceId).To(Equal("some-id"))
+			Expect(t, e.Timestamp).To(Equal(int64(i * 2)))
+		}
+	})
 }
 
 func TestAnalystAggregate(t *testing.T) {
@@ -141,9 +177,7 @@ func TestAnalystAggregate(t *testing.T) {
 							End:   20,
 						},
 						Envelopes: &loggrebutterfly.AnalystFilter_Counter{
-							Counter: &loggrebutterfly.CounterFilter{
-								Name: "some-name",
-							},
+							Counter: &loggrebutterfly.CounterFilter{},
 						},
 					},
 				},
@@ -160,6 +194,41 @@ func TestAnalystAggregate(t *testing.T) {
 		Expect(t, results.Results[10]).To(Equal(float64(99 * 5)))
 		Expect(t, results.Results[15]).To(Equal(float64(99 * 5)))
 	})
+
+	o.Spec("it aggregates data into the requested buckets for the filtered name", func(t TA) {
+		var results *loggrebutterfly.AggregateResponse
+		f := func() bool {
+			var err error
+			ctx, _ := context.WithTimeout(context.Background(), time.Second)
+			results, err = t.client.Aggregate(ctx, &loggrebutterfly.AggregateInfo{
+				BucketWidthNs: 5,
+				Query: &loggrebutterfly.QueryInfo{
+					Filter: &loggrebutterfly.AnalystFilter{
+						SourceId: "some-id",
+						TimeRange: &loggrebutterfly.TimeRange{
+							Start: 10,
+							End:   20,
+						},
+						Envelopes: &loggrebutterfly.AnalystFilter_Counter{
+							Counter: &loggrebutterfly.CounterFilter{
+								Name: "some-name-0",
+							},
+						},
+					},
+				},
+			})
+			return err == nil
+		}
+
+		Expect(t, f).To(ViaPollingMatcher{
+			Duration: 5 * time.Second,
+			Matcher:  BeTrue(),
+		})
+
+		Expect(t, results.Results).To(HaveLen(2))
+		Expect(t, results.Results[10]).To(Equal(float64(99 * 3)))
+		Expect(t, results.Results[15]).To(Equal(float64(99 * 2)))
+	})
 }
 
 func serveUpData() {
@@ -172,7 +241,7 @@ func serveUpData() {
 					Timestamp: int64(i),
 					Message: &v2.Envelope_Counter{
 						Counter: &v2.Counter{
-							Name:  "some-name",
+							Name:  fmt.Sprintf("some-name-%d", i%2),
 							Value: &v2.Counter_Total{99},
 						},
 					},
@@ -183,7 +252,7 @@ func serveUpData() {
 				}
 				err = rx.Send(&talaria.ReadDataPacket{Message: data})
 				if err != nil {
-					panic(err)
+					return
 				}
 			}
 
