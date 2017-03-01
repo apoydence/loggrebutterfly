@@ -74,6 +74,59 @@ func TestFilter(t *testing.T) {
 	})
 
 	o.Group("LogFilter", func() {
+		o.Group("Empty payload", func() {
+			o.BeforeEach(func(t *testing.T) TF {
+				req := &v1.QueryInfo{
+					Filter: &v1.AnalystFilter{
+						SourceId: "some-id",
+						Envelopes: &v1.AnalystFilter_Log{
+							Log: &v1.LogFilter{},
+						},
+						TimeRange: &v1.TimeRange{
+							Start: 1,
+							End:   9223372036854775807,
+						},
+					},
+				}
+
+				f, err := mappers.NewFilter(&v1.AggregateInfo{Query: req})
+				Expect(t, err == nil).To(BeTrue())
+
+				return TF{
+					T:  t,
+					tr: f,
+				}
+			})
+
+			o.Spec("it filters out envelopes that are not logs", func(t TF) {
+				e1 := &loggregator.Envelope{
+					SourceId:  "some-id",
+					Timestamp: 98,
+					Message: &loggregator.Envelope_Counter{
+						Counter: &loggregator.Counter{
+							Name: "some-name",
+						},
+					},
+				}
+
+				e2 := &loggregator.Envelope{
+					SourceId:  "some-id",
+					Timestamp: 98,
+					Message: &loggregator.Envelope_Log{
+						Log: &loggregator.Log{
+							Payload: []byte("some-value"),
+						},
+					},
+				}
+
+				keep := t.tr.Filter(e1)
+				Expect(t, keep).To(BeFalse())
+
+				keep = t.tr.Filter(e2)
+				Expect(t, keep).To(BeTrue())
+			})
+		})
+
 		o.Group("Match", func() {
 			o.BeforeEach(func(t *testing.T) TF {
 				req := &v1.QueryInfo{
