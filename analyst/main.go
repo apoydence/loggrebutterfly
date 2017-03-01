@@ -48,19 +48,30 @@ func main() {
 
 func setupAlgorithmFetcher() *algorithms.Fetcher {
 	return algorithms.NewFetcher(map[string]algorithms.AlgBuilder{
-		"timerange": algorithms.AlgBuilder(func(info *v1.AggregateInfo) mapreduce.Algorithm {
-			filter := mappers.NewFilter(info)
+		"timerange": algorithms.AlgBuilder(func(info *v1.AggregateInfo) (mapreduce.Algorithm, error) {
+			filter, err := mappers.NewFilter(info)
+			if err != nil {
+				return mapreduce.Algorithm{}, err
+			}
 			return mapreduce.Algorithm{
 				Mapper:  mappers.NewQuery(filter),
 				Reducer: reducers.NewFirst(),
-			}
+			}, nil
 		}),
-		"aggregation": algorithms.AlgBuilder(func(info *v1.AggregateInfo) mapreduce.Algorithm {
-			filter := mappers.NewFilter(info)
-			return mapreduce.Algorithm{
-				Mapper:  mappers.NewAggregation(info, filter),
-				Reducer: reducers.NewSumF(),
+		"aggregation": algorithms.AlgBuilder(func(info *v1.AggregateInfo) (mapreduce.Algorithm, error) {
+			filter, err := mappers.NewFilter(info)
+			if err != nil {
+				return mapreduce.Algorithm{}, err
 			}
+			agg, err := mappers.NewAggregation(info, filter)
+			if err != nil {
+				return mapreduce.Algorithm{}, err
+			}
+
+			return mapreduce.Algorithm{
+				Mapper:  agg,
+				Reducer: reducers.NewSumF(),
+			}, nil
 		}),
 	})
 }

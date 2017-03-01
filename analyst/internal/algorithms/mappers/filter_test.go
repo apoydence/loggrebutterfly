@@ -33,9 +33,12 @@ func TestFilter(t *testing.T) {
 				},
 			}
 
+			f, err := mappers.NewFilter(&v1.AggregateInfo{Query: req})
+			Expect(t, err == nil).To(BeTrue())
+
 			return TF{
 				T:  t,
-				tr: mappers.NewFilter(&v1.AggregateInfo{Query: req}),
+				tr: f,
 			}
 		})
 
@@ -70,6 +73,188 @@ func TestFilter(t *testing.T) {
 		})
 	})
 
+	o.Group("LogFilter", func() {
+		o.Group("Match", func() {
+			o.BeforeEach(func(t *testing.T) TF {
+				req := &v1.QueryInfo{
+					Filter: &v1.AnalystFilter{
+						SourceId: "some-id",
+						Envelopes: &v1.AnalystFilter_Log{
+							Log: &v1.LogFilter{
+								Payload: &v1.LogFilter_Match{
+									Match: []byte("some-value"),
+								},
+							},
+						},
+					},
+				}
+
+				f, err := mappers.NewFilter(&v1.AggregateInfo{Query: req})
+				Expect(t, err == nil).To(BeTrue())
+
+				return TF{
+					T:  t,
+					tr: f,
+				}
+			})
+
+			o.Spec("it filters out envelopes that are not logs", func(t TF) {
+				e1 := &loggregator.Envelope{
+					SourceId:  "some-id",
+					Timestamp: 98,
+					Message: &loggregator.Envelope_Counter{
+						Counter: &loggregator.Counter{
+							Name: "some-name",
+						},
+					},
+				}
+
+				e2 := &loggregator.Envelope{
+					SourceId:  "some-id",
+					Timestamp: 98,
+					Message: &loggregator.Envelope_Log{
+						Log: &loggregator.Log{
+							Payload: []byte("some-value"),
+						},
+					},
+				}
+
+				keep := t.tr.Filter(e1)
+				Expect(t, keep).To(BeFalse())
+
+				keep = t.tr.Filter(e2)
+				Expect(t, keep).To(BeTrue())
+			})
+
+			o.Spec("it filters out envelopes that don't have the exact payload", func(t TF) {
+				e1 := &loggregator.Envelope{
+					SourceId:  "some-id",
+					Timestamp: 98,
+					Message: &loggregator.Envelope_Log{
+						Log: &loggregator.Log{
+							Payload: []byte("wrong-value"),
+						},
+					},
+				}
+
+				e2 := &loggregator.Envelope{
+					SourceId:  "some-id",
+					Timestamp: 98,
+					Message: &loggregator.Envelope_Log{
+						Log: &loggregator.Log{
+							Payload: []byte("some-value"),
+						},
+					},
+				}
+
+				keep := t.tr.Filter(e1)
+				Expect(t, keep).To(BeFalse())
+
+				keep = t.tr.Filter(e2)
+				Expect(t, keep).To(BeTrue())
+			})
+		})
+
+		o.Group("Regexp", func() {
+			o.BeforeEach(func(t *testing.T) TF {
+				req := &v1.QueryInfo{
+					Filter: &v1.AnalystFilter{
+						SourceId: "some-id",
+						Envelopes: &v1.AnalystFilter_Log{
+							Log: &v1.LogFilter{
+								Payload: &v1.LogFilter_Regexp{
+									Regexp: "^[sS]ome-value",
+								},
+							},
+						},
+					},
+				}
+
+				f, err := mappers.NewFilter(&v1.AggregateInfo{Query: req})
+				Expect(t, err == nil).To(BeTrue())
+
+				return TF{
+					T:  t,
+					tr: f,
+				}
+			})
+
+			o.Spec("it returns an error for an invalid regexp pattern", func(t TF) {
+				req := &v1.QueryInfo{
+					Filter: &v1.AnalystFilter{
+						SourceId: "some-id",
+						Envelopes: &v1.AnalystFilter_Log{
+							Log: &v1.LogFilter{
+								Payload: &v1.LogFilter_Regexp{
+									Regexp: "[",
+								},
+							},
+						},
+					},
+				}
+
+				_, err := mappers.NewFilter(&v1.AggregateInfo{Query: req})
+				Expect(t, err == nil).To(BeFalse())
+			})
+
+			o.Spec("it filters out envelopes that are not logs", func(t TF) {
+				e1 := &loggregator.Envelope{
+					SourceId:  "some-id",
+					Timestamp: 98,
+					Message: &loggregator.Envelope_Counter{
+						Counter: &loggregator.Counter{
+							Name: "some-name",
+						},
+					},
+				}
+
+				e2 := &loggregator.Envelope{
+					SourceId:  "some-id",
+					Timestamp: 98,
+					Message: &loggregator.Envelope_Log{
+						Log: &loggregator.Log{
+							Payload: []byte("some-value"),
+						},
+					},
+				}
+
+				keep := t.tr.Filter(e1)
+				Expect(t, keep).To(BeFalse())
+
+				keep = t.tr.Filter(e2)
+				Expect(t, keep).To(BeTrue())
+			})
+
+			o.Spec("it filters out envelopes that don't have the exact payload", func(t TF) {
+				e1 := &loggregator.Envelope{
+					SourceId:  "some-id",
+					Timestamp: 98,
+					Message: &loggregator.Envelope_Log{
+						Log: &loggregator.Log{
+							Payload: []byte("wrong-some-value"),
+						},
+					},
+				}
+
+				e2 := &loggregator.Envelope{
+					SourceId:  "some-id",
+					Timestamp: 98,
+					Message: &loggregator.Envelope_Log{
+						Log: &loggregator.Log{
+							Payload: []byte("some-value-thats-good"),
+						},
+					},
+				}
+
+				keep := t.tr.Filter(e1)
+				Expect(t, keep).To(BeFalse())
+
+				keep = t.tr.Filter(e2)
+				Expect(t, keep).To(BeTrue())
+			})
+		})
+	})
+
 	o.Group("CounterFilter", func() {
 		o.Group("empty name", func() {
 			o.BeforeEach(func(t *testing.T) TF {
@@ -82,9 +267,12 @@ func TestFilter(t *testing.T) {
 					},
 				}
 
+				f, err := mappers.NewFilter(&v1.AggregateInfo{Query: req})
+				Expect(t, err == nil).To(BeTrue())
+
 				return TF{
 					T:  t,
-					tr: mappers.NewFilter(&v1.AggregateInfo{Query: req}),
+					tr: f,
 				}
 			})
 
@@ -121,9 +309,12 @@ func TestFilter(t *testing.T) {
 					},
 				}
 
+				f, err := mappers.NewFilter(&v1.AggregateInfo{Query: req})
+				Expect(t, err == nil).To(BeTrue())
+
 				return TF{
 					T:  t,
-					tr: mappers.NewFilter(&v1.AggregateInfo{Query: req}),
+					tr: f,
 				}
 			})
 

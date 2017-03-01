@@ -2,6 +2,7 @@ package mappers
 
 import (
 	"encoding/binary"
+	"fmt"
 	"math"
 	"strconv"
 	"time"
@@ -14,11 +15,15 @@ type Aggregation struct {
 	filter Filter
 }
 
-func NewAggregation(info *v1.AggregateInfo, filter Filter) Aggregation {
+func NewAggregation(info *v1.AggregateInfo, filter Filter) (Aggregation, error) {
+	if info.GetQuery().GetFilter().GetLog() != nil {
+		return Aggregation{}, fmt.Errorf("invalid filter: log")
+	}
+
 	return Aggregation{
 		info:   info,
 		filter: filter,
-	}
+	}, nil
 }
 
 func (a Aggregation) Map(value []byte) (key string, output []byte, err error) {

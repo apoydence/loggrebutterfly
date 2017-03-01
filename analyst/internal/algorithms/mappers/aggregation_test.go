@@ -44,10 +44,12 @@ func TestAggregation(t *testing.T) {
 		}
 
 		mockFilter := newMockFilter()
+		agg, err := mappers.NewAggregation(req, mockFilter)
+		Expect(t, err == nil).To(BeTrue())
 
 		return TA{
 			T:          t,
-			agg:        mappers.NewAggregation(req, mockFilter),
+			agg:        agg,
 			mockFilter: mockFilter,
 		}
 	})
@@ -81,6 +83,36 @@ func TestAggregation(t *testing.T) {
 		Expect(t, err == nil).To(BeFalse())
 	})
 
+}
+
+func TestAggregationInvalidFilter(t *testing.T) {
+	t.Parallel()
+	o := onpar.New()
+	defer o.Run(t)
+
+	req := &v1.AggregateInfo{
+		BucketWidthNs: 2,
+		Query: &v1.QueryInfo{
+			Filter: &v1.AnalystFilter{
+				SourceId: "some-id",
+				TimeRange: &v1.TimeRange{
+					Start: 99,
+					End:   101,
+				},
+				Envelopes: &v1.AnalystFilter_Log{
+					Log: &v1.LogFilter{
+						Payload: &v1.LogFilter_Match{
+							Match: []byte("something"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	mockFilter := newMockFilter()
+	_, err := mappers.NewAggregation(req, mockFilter)
+	Expect(t, err == nil).To(BeFalse())
 }
 
 func buildCounter(name, sourceId string, t int64) []byte {

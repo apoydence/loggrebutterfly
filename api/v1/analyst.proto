@@ -32,6 +32,7 @@ message AnalystFilter {
 
   oneof Envelopes {
     CounterFilter counter = 3;
+    LogFilter log = 4;
   }
 }
 
@@ -43,4 +44,11 @@ message TimeRange {
 
 message CounterFilter {
   string name = 1;
+}
+
+message LogFilter {
+  oneof Payload {
+    string regexp = 1;
+    bytes match = 2;
+  }
 }
