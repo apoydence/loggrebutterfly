@@ -32,7 +32,8 @@ func (f filter) Filter(e *loggregator.Envelope) (keep bool) {
 	return f.info.GetFilter().GetSourceId() == e.GetSourceId() &&
 		f.filterViaTimestamp(f.info, e) &&
 		f.filterViaCounter(f.info, e) &&
-		f.filterViaLog(f.info, e)
+		f.filterViaLog(f.info, e) &&
+		f.filterViaGauge(f.info, e)
 }
 
 func (f filter) filterViaTimestamp(info *v1.QueryInfo, e *loggregator.Envelope) bool {
@@ -102,4 +103,31 @@ func (f filter) filterViaCounter(info *v1.QueryInfo, e *loggregator.Envelope) bo
 	}
 
 	return filterName == e.GetCounter().GetName()
+}
+
+func (f filter) filterViaGauge(info *v1.QueryInfo, e *loggregator.Envelope) bool {
+	if info.GetFilter().GetGauge() == nil {
+		return true
+	}
+
+	if e.GetGauge() == nil {
+		return false
+	}
+
+	for name, value := range info.GetFilter().GetGauge().GetFilter() {
+		if !f.containsKeyValue(name, value, e.GetGauge().GetMetrics()) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (f filter) containsKeyValue(name string, value *v1.GaugeFilterValue, m map[string]*loggregator.GaugeValue) bool {
+	for n, v := range m {
+		if name == n && (value == nil || value.GetValue() == v.GetValue()) {
+			return true
+		}
+	}
+	return false
 }

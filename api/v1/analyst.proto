@@ -33,6 +33,7 @@ message AnalystFilter {
   oneof Envelopes {
     CounterFilter counter = 3;
     LogFilter log = 4;
+    GaugeFilter gauge = 5;
   }
 }
 
@@ -51,4 +52,12 @@ message LogFilter {
     string regexp = 1;
     bytes match = 2;
   }
+}
+
+message GaugeFilter {
+  map<string, GaugeFilterValue> filter = 1;
+}
+
+message GaugeFilterValue {
+  double value = 1;
 }

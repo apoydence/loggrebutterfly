@@ -406,3 +406,142 @@ func TestFilterCounter(t *testing.T) {
 		})
 	})
 }
+
+func TestFilterGauge(t *testing.T) {
+	t.Parallel()
+	o := onpar.New()
+	defer o.Run(t)
+
+	o.Group("empty names", func() {
+		o.BeforeEach(func(t *testing.T) TF {
+			req := &v1.QueryInfo{
+				Filter: &v1.AnalystFilter{
+					SourceId: "some-id",
+					Envelopes: &v1.AnalystFilter_Gauge{
+						Gauge: &v1.GaugeFilter{},
+					},
+				},
+			}
+
+			f, err := mappers.NewFilter(&v1.AggregateInfo{Query: req})
+			Expect(t, err == nil).To(BeTrue())
+
+			return TF{
+				T:  t,
+				tr: f,
+			}
+		})
+
+		o.Spec("it filters out envelopes that are not gauges", func(t TF) {
+			e1 := &loggregator.Envelope{SourceId: "some-id", Timestamp: 98}
+			e2 := &loggregator.Envelope{
+				SourceId:  "some-id",
+				Timestamp: 98,
+				Message: &loggregator.Envelope_Gauge{
+					Gauge: &loggregator.Gauge{
+						Metrics: map[string]*loggregator.GaugeValue{
+							"some-name": &loggregator.GaugeValue{
+								Value: 5.5,
+							},
+						},
+					},
+				},
+			}
+
+			keep := t.tr.Filter(e1)
+			Expect(t, keep).To(BeFalse())
+
+			keep = t.tr.Filter(e2)
+			Expect(t, keep).To(BeTrue())
+		})
+	})
+
+	o.Group("multiple names without values", func() {
+		o.BeforeEach(func(t *testing.T) TF {
+			req := &v1.QueryInfo{
+				Filter: &v1.AnalystFilter{
+					SourceId: "some-id",
+					Envelopes: &v1.AnalystFilter_Gauge{
+						Gauge: &v1.GaugeFilter{
+							Filter: map[string]*v1.GaugeFilterValue{
+								"a": nil,
+								"b": &v1.GaugeFilterValue{99},
+							},
+						},
+					},
+				},
+			}
+
+			f, err := mappers.NewFilter(&v1.AggregateInfo{Query: req})
+			Expect(t, err == nil).To(BeTrue())
+
+			return TF{
+				T:  t,
+				tr: f,
+			}
+		})
+
+		o.Spec("it filters out envelopes that have a key value mismatch", func(t TF) {
+			e1 := &loggregator.Envelope{
+				SourceId:  "some-id",
+				Timestamp: 97,
+				Message: &loggregator.Envelope_Gauge{
+					Gauge: &loggregator.Gauge{
+						Metrics: map[string]*loggregator.GaugeValue{
+							"some-name": &loggregator.GaugeValue{
+								Value: 5.5,
+							},
+						},
+					},
+				},
+			}
+			e2 := &loggregator.Envelope{
+				SourceId:  "some-id",
+				Timestamp: 97,
+				Message: &loggregator.Envelope_Gauge{
+					Gauge: &loggregator.Gauge{
+						Metrics: map[string]*loggregator.GaugeValue{
+							"some-name": &loggregator.GaugeValue{
+								Value: 5.5,
+							},
+							"a": &loggregator.GaugeValue{
+								Value: 5.5,
+							},
+							"b": &loggregator.GaugeValue{
+								Value: 5.5,
+							},
+						},
+					},
+				},
+			}
+			e3 := &loggregator.Envelope{
+				SourceId:  "some-id",
+				Timestamp: 97,
+				Message: &loggregator.Envelope_Gauge{
+					Gauge: &loggregator.Gauge{
+						Metrics: map[string]*loggregator.GaugeValue{
+							"some-name": &loggregator.GaugeValue{
+								Value: 5.5,
+							},
+							"a": &loggregator.GaugeValue{
+								Value: 5.5,
+							},
+							"b": &loggregator.GaugeValue{
+								Value: 99,
+							},
+						},
+					},
+				},
+			}
+
+			keep := t.tr.Filter(e1)
+			Expect(t, keep).To(BeFalse())
+
+			keep = t.tr.Filter(e2)
+			Expect(t, keep).To(BeFalse())
+
+			keep = t.tr.Filter(e3)
+			Expect(t, keep).To(BeTrue())
+		})
+	})
+}
