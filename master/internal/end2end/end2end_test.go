@@ -107,6 +107,14 @@ func TestMaster(t *testing.T) {
 	for _, m := range mockDataNodes {
 		testhelpers.AlwaysReturn(m.ReadMetricsOutput.Ret0, new(intra.ReadMetricsResponse))
 		close(m.ReadMetricsOutput.Ret1)
+
+		go func(m *mockDataNodeServer) {
+			for {
+				<-m.ReadMetricsCalled
+				<-m.ReadMetricsInput.Arg0
+				<-m.ReadMetricsInput.Arg1
+			}
+		}(m)
 	}
 
 	o.BeforeEach(func(t *testing.T) TM {
@@ -128,13 +136,22 @@ func TestMaster(t *testing.T) {
 	})
 
 	o.Spec("it fills a gap", func(t TM) {
-		mockScheduler.CreateInput.Arg1 <- &talariapb.CreateInfo{Name: buildRangeName(0, 9223372036854775807, 100)}
-
 		f := func() bool {
-			return len(mockScheduler.CreateCalled) >= 5
+			return len(mockScheduler.CreateCalled) >= 4
 		}
 
 		Expect(t, f).To(ViaPollingMatcher{
+			Matcher:  BeTrue(),
+			Duration: 10 * time.Second,
+		})
+
+		mockScheduler.CreateInput.Arg1 <- &talariapb.CreateInfo{Name: buildRangeName(0, 9223372036854775807, 100)}
+
+		ff := func() bool {
+			return len(mockScheduler.CreateCalled) >= 5
+		}
+
+		Expect(t, ff).To(ViaPollingMatcher{
 			Matcher:  BeTrue(),
 			Duration: 10 * time.Second,
 		})
@@ -151,7 +168,10 @@ func TestMaster(t *testing.T) {
 			}
 			return len(resp.Routes) >= 2
 		}
-		Expect(t, f).To(ViaPolling(BeTrue()))
+		Expect(t, f).To(ViaPollingMatcher{
+			Duration: 5 * time.Second,
+			Matcher:  BeTrue(),
+		})
 		Expect(t, resp.Routes[0].Leader).To(Equal(dataNodeAddrs[0]))
 	})
 }
@@ -190,8 +210,8 @@ func startMaster(port int, schedAddr string, routers []string) *os.Process {
 		fmt.Sprintf("DATA_NODE_ADDRS=%s", buildDataNodeAddrs(routers)),
 		fmt.Sprintf("TALARIA_NODE_ADDRS=%s", buildDataNodeAddrs(routers)),
 		"ANALYST_ADDRS=analyst-a,analyst-b",
-		"BALANCER_INTERVAL=1ms",
-		"FILLER_INTERVAL=1ms",
+		"BALANCER_INTERVAL=1ns",
+		"FILLER_INTERVAL=1ns",
 	}
 
 	if testing.Verbose() {

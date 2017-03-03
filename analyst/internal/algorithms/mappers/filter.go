@@ -1,6 +1,7 @@
 package mappers
 
 import (
+	"fmt"
 	"regexp"
 
 	loggregator "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
@@ -13,19 +14,15 @@ type filter struct {
 }
 
 func NewFilter(info *v1.AggregateInfo) (Filter, error) {
-	var r *regexp.Regexp
-	if pattern := info.GetQuery().GetFilter().GetLog().GetRegexp(); pattern != "" {
-		var err error
-		r, err = regexp.Compile(pattern)
-		if err != nil {
-			return nil, err
-		}
+	f := filter{
+		info: info.GetQuery(),
 	}
 
-	return filter{
-		info:  info.GetQuery(),
-		regex: r,
-	}, nil
+	if err := f.validateFilter(info); err != nil {
+		return nil, err
+	}
+
+	return f, nil
 }
 
 func (f filter) Filter(e *loggregator.Envelope) (keep bool) {
@@ -34,6 +31,35 @@ func (f filter) Filter(e *loggregator.Envelope) (keep bool) {
 		f.filterViaCounter(f.info, e) &&
 		f.filterViaLog(f.info, e) &&
 		f.filterViaGauge(f.info, e)
+}
+
+func (f *filter) validateFilter(info *v1.AggregateInfo) error {
+	var r *regexp.Regexp
+	if pattern := info.GetQuery().GetFilter().GetLog().GetRegexp(); pattern != "" {
+		var err error
+		r, err = regexp.Compile(pattern)
+		if err != nil {
+			return err
+		}
+		f.regex = r
+		return nil
+	}
+
+	if g := info.GetQuery().GetFilter().GetGauge(); g != nil {
+		if g.Name == "" {
+			return nil
+		}
+
+		for n, _ := range g.GetFilter() {
+			if n == g.Name {
+				return nil
+			}
+		}
+
+		return fmt.Errorf("Filter map must include name")
+	}
+
+	return nil
 }
 
 func (f filter) filterViaTimestamp(info *v1.QueryInfo, e *loggregator.Envelope) bool {

@@ -412,6 +412,22 @@ func TestFilterGauge(t *testing.T) {
 	o := onpar.New()
 	defer o.Run(t)
 
+	o.Spec("it returns an error if the name is not in the filter list", func(t *testing.T) {
+		req := &v1.QueryInfo{
+			Filter: &v1.AnalystFilter{
+				SourceId: "some-id",
+				Envelopes: &v1.AnalystFilter_Gauge{
+					Gauge: &v1.GaugeFilter{
+						Name: "some-name",
+					},
+				},
+			},
+		}
+
+		_, err := mappers.NewFilter(&v1.AggregateInfo{Query: req})
+		Expect(t, err == nil).To(BeFalse())
+	})
+
 	o.Group("empty names", func() {
 		o.BeforeEach(func(t *testing.T) TF {
 			req := &v1.QueryInfo{
@@ -463,6 +479,7 @@ func TestFilterGauge(t *testing.T) {
 					SourceId: "some-id",
 					Envelopes: &v1.AnalystFilter_Gauge{
 						Gauge: &v1.GaugeFilter{
+							Name: "a",
 							Filter: map[string]*v1.GaugeFilterValue{
 								"a": nil,
 								"b": &v1.GaugeFilterValue{99},

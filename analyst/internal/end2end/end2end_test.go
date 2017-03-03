@@ -28,15 +28,6 @@ import (
 	"google.golang.org/grpc/grpclog"
 )
 
-var (
-	analystPort      int
-	analystIntraPort int
-
-	nodeAddr, schedAddr string
-	mockNode            *mockNodeServer
-	mockSched           *mockSchedulerServer
-)
-
 func TestMain(m *testing.M) {
 	flag.Parse()
 	if !testing.Verbose() {
@@ -44,26 +35,19 @@ func TestMain(m *testing.M) {
 		grpclog.SetLogger(log.New(ioutil.Discard, "", log.LstdFlags))
 	}
 
-	ps := setup()
-	go serveUpData()
-	go serveScheduler()
-
-	var status int
-	func() {
-		defer func() {
-			for _, p := range ps {
-				p.Kill()
-			}
-		}()
-		status = m.Run()
-	}()
-
-	os.Exit(status)
+	os.Exit(m.Run())
 }
 
 type TA struct {
 	*testing.T
-	client loggrebutterfly.AnalystClient
+	client           loggrebutterfly.AnalystClient
+	analystPort      int
+	analystIntraPort int
+
+	nodeAddr, schedAddr string
+	mockNode            *mockNodeServer
+	mockSched           *mockSchedulerServer
+	ps                  []*os.Process
 }
 
 func TestAnalystQuery(t *testing.T) {
@@ -72,11 +56,21 @@ func TestAnalystQuery(t *testing.T) {
 	defer o.Run(t)
 
 	o.BeforeEach(func(t *testing.T) TA {
-		client := startClient(fmt.Sprintf("localhost:%d", analystPort))
+		ta := TA{
+			T: t,
+		}
 
-		return TA{
-			T:      t,
-			client: client,
+		setup(&ta)
+		go serveUpData(ta)
+		go serveScheduler(ta)
+		ta.client = startClient(fmt.Sprintf("localhost:%d", ta.analystPort))
+
+		return ta
+	})
+
+	o.AfterEach(func(t TA) {
+		for _, p := range t.ps {
+			p.Kill()
 		}
 	})
 
@@ -154,11 +148,21 @@ func TestAnalystAggregate(t *testing.T) {
 	defer o.Run(t)
 
 	o.BeforeEach(func(t *testing.T) TA {
-		client := startClient(fmt.Sprintf("localhost:%d", analystPort))
+		ta := TA{
+			T: t,
+		}
 
-		return TA{
-			T:      t,
-			client: client,
+		setup(&ta)
+		go serveUpData(ta)
+		go serveScheduler(ta)
+		ta.client = startClient(fmt.Sprintf("localhost:%d", ta.analystPort))
+
+		return ta
+	})
+
+	o.AfterEach(func(t TA) {
+		for _, p := range t.ps {
+			p.Kill()
 		}
 	})
 
@@ -231,9 +235,9 @@ func TestAnalystAggregate(t *testing.T) {
 	})
 }
 
-func serveUpData() {
+func serveUpData(t TA) {
 	for {
-		rx := <-mockNode.ReadInput.Arg1
+		rx := <-t.mockNode.ReadInput.Arg1
 		go func(rx talaria.Node_ReadServer) {
 			for i := 0; i < 100; i++ {
 				e := &v2.Envelope{
@@ -256,20 +260,20 @@ func serveUpData() {
 				}
 			}
 
-			mockNode.ReadOutput.Ret0 <- io.EOF
+			t.mockNode.ReadOutput.Ret0 <- io.EOF
 		}(rx)
 	}
 }
 
-func serveScheduler() {
-	close(mockSched.ListClusterInfoOutput.Ret1)
-	testhelpers.AlwaysReturn(mockSched.ListClusterInfoOutput.Ret0, &talaria.ListResponse{
+func serveScheduler(t TA) {
+	close(t.mockSched.ListClusterInfoOutput.Ret1)
+	testhelpers.AlwaysReturn(t.mockSched.ListClusterInfoOutput.Ret0, &talaria.ListResponse{
 		Info: []*talaria.ClusterInfo{
 			{
 				Name: `{"Low":0,"High":18446744073709551615}`,
 				Nodes: []*talaria.NodeInfo{
 					{
-						URI: nodeAddr,
+						URI: t.nodeAddr,
 					},
 				},
 			},
@@ -285,17 +289,14 @@ func startClient(addr string) loggrebutterfly.AnalystClient {
 	return loggrebutterfly.NewAnalystClient(conn)
 }
 
-func setup() []*os.Process {
-	nodeAddr, mockNode = startMockNode()
-	schedAddr, mockSched = startMockSched()
+func setup(t *TA) {
+	t.nodeAddr, t.mockNode = startMockNode()
+	t.schedAddr, t.mockSched = startMockSched()
 
-	analystPort = end2end.AvailablePort()
-	analystIntraPort = end2end.AvailablePort()
-	analystPs := startAnalyst(analystPort, analystIntraPort, nodeAddr, schedAddr)
-
-	return []*os.Process{
-		analystPs,
-	}
+	t.analystPort = end2end.AvailablePort()
+	t.analystIntraPort = end2end.AvailablePort()
+	analystPs := startAnalyst(t.analystPort, t.analystIntraPort, t.nodeAddr, t.schedAddr)
+	t.ps = append(t.ps, analystPs)
 }
 
 func startAnalyst(port, intraPort int, dataNodeAddr, schedAddr string) *os.Process {

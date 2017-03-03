@@ -30,6 +30,7 @@ func main() {
 
 	maintainer.StartFiller(metricsReader, fs,
 		maintainer.WithFillerInterval(conf.FillerInterval),
+		maintainer.WithFillerMinCount(conf.MinRoutes),
 	)
 
 	log.Printf("Starting server on %s", conf.Addr)

@@ -105,7 +105,10 @@ func TestDataNode(t *testing.T) {
 
 			return sender.Send(&pb.WriteInfo{Payload: data}) == nil
 		}
-		Expect(t, f).To(ViaPolling(BeTrue()))
+		Expect(t, f).To(ViaPollingMatcher{
+			Duration: 5 * time.Second,
+			Matcher:  BeTrue(),
+		})
 
 		var resp *intra.ReadMetricsResponse
 		f = func() bool {
@@ -128,9 +131,10 @@ func TestDataNode(t *testing.T) {
 
 		go func() {
 			var server talariapb.Node_ReadServer
-			Expect(t, mockNode.ReadInput.Arg1).To(ViaPolling(
-				Chain(Receive(), Fetch(&server)),
-			))
+			Expect(t, mockNode.ReadInput.Arg1).To(ViaPollingMatcher{
+				Duration: 5 * time.Second,
+				Matcher:  Chain(Receive(), Fetch(&server)),
+			})
 
 			server.Send(&talariapb.ReadDataPacket{
 				Message: []byte("some-data"),
@@ -148,7 +152,12 @@ func TestDataNode(t *testing.T) {
 			rx, err = t.client.Read(context.Background(), &pb.ReadInfo{Name: t.fileName})
 			return err == nil
 		}
-		Expect(t, f).To(ViaPolling(BeTrue()))
+
+		Expect(t, f).To(ViaPollingMatcher{
+			Duration: 5 * time.Second,
+			Matcher:  BeTrue(),
+		})
+
 		rxData, err := rx.Recv()
 		Expect(t, err == nil).To(BeTrue())
 		Expect(t, rxData.Payload).To(Equal([]byte("some-data")))

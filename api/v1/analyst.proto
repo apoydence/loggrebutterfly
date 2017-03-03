@@ -55,7 +55,8 @@ message LogFilter {
 }
 
 message GaugeFilter {
-  map<string, GaugeFilterValue> filter = 1;
+  string name = 1;
+  map<string, GaugeFilterValue> filter = 2;
 }
 
 message GaugeFilterValue {
