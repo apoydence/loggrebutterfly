@@ -6,7 +6,7 @@
 package end2end_test
 
 import (
-	"github.com/apoydence/talaria/api/v1"
+	"github.com/poy/talaria/api/v1"
 	"golang.org/x/net/context"
 )
 

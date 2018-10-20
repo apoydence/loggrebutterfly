@@ -9,7 +9,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	pb "github.com/apoydence/loggrebutterfly/api/v1"
+	pb "github.com/poy/loggrebutterfly/api/v1"
 )
 
 type Cache struct {

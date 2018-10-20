@@ -1,6 +1,6 @@
 package server
 
-import "github.com/apoydence/petasos/router"
+import "github.com/poy/petasos/router"
 
 type RouterFetcher struct {
 	fs             router.FileSystem

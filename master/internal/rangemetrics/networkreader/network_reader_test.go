@@ -10,12 +10,12 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/apoydence/eachers/testhelpers"
-	"github.com/apoydence/loggrebutterfly/master/internal/rangemetrics/networkreader"
-	"github.com/apoydence/loggrebutterfly/api/intra"
-	"github.com/apoydence/onpar"
-	. "github.com/apoydence/onpar/expect"
-	. "github.com/apoydence/onpar/matchers"
+	"github.com/poy/eachers/testhelpers"
+	"github.com/poy/loggrebutterfly/master/internal/rangemetrics/networkreader"
+	"github.com/poy/loggrebutterfly/api/intra"
+	"github.com/poy/onpar"
+	. "github.com/poy/onpar/expect"
+	. "github.com/poy/onpar/matchers"
 )
 
 func TestMain(m *testing.M) {

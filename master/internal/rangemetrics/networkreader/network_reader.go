@@ -7,8 +7,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/apoydence/loggrebutterfly/api/intra"
-	"github.com/apoydence/petasos/router"
+	"github.com/poy/loggrebutterfly/api/intra"
+	"github.com/poy/petasos/router"
 )
 
 type NetworkReader struct {

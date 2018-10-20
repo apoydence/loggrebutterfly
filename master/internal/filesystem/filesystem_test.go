@@ -10,13 +10,13 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/apoydence/eachers/testhelpers"
-	"github.com/apoydence/loggrebutterfly/master/internal/filesystem"
-	"github.com/apoydence/onpar"
-	pb "github.com/apoydence/talaria/api/v1"
+	"github.com/poy/eachers/testhelpers"
+	"github.com/poy/loggrebutterfly/master/internal/filesystem"
+	"github.com/poy/onpar"
+	pb "github.com/poy/talaria/api/v1"
 
-	. "github.com/apoydence/onpar/expect"
-	. "github.com/apoydence/onpar/matchers"
+	. "github.com/poy/onpar/expect"
+	. "github.com/poy/onpar/matchers"
 )
 
 func TestMain(m *testing.M) {

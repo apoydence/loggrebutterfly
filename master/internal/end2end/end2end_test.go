@@ -18,17 +18,17 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 
-	"github.com/apoydence/eachers/testhelpers"
-	"github.com/apoydence/loggrebutterfly/api/intra"
-	pb "github.com/apoydence/loggrebutterfly/api/v1"
-	"github.com/apoydence/loggrebutterfly/internal/end2end"
-	"github.com/apoydence/onpar"
-	"github.com/apoydence/petasos/router"
-	talariapb "github.com/apoydence/talaria/api/v1"
+	"github.com/poy/eachers/testhelpers"
+	"github.com/poy/loggrebutterfly/api/intra"
+	pb "github.com/poy/loggrebutterfly/api/v1"
+	"github.com/poy/loggrebutterfly/internal/end2end"
+	"github.com/poy/onpar"
+	"github.com/poy/petasos/router"
+	talariapb "github.com/poy/talaria/api/v1"
 	"github.com/onsi/gomega/gexec"
 
-	. "github.com/apoydence/onpar/expect"
-	. "github.com/apoydence/onpar/matchers"
+	. "github.com/poy/onpar/expect"
+	. "github.com/poy/onpar/matchers"
 )
 
 var (
@@ -197,7 +197,7 @@ func startMaster(port int, schedAddr string, routers []string) *os.Process {
 	log.Printf("Starting master on %d...", port)
 	defer log.Printf("Done starting master on %d.", port)
 
-	path, err := gexec.Build("github.com/apoydence/loggrebutterfly/master")
+	path, err := gexec.Build("github.com/poy/loggrebutterfly/master")
 	if err != nil {
 		panic(err)
 	}

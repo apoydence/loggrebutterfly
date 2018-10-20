@@ -1,7 +1,7 @@
 package filesystem
 
 import (
-	talaria "github.com/apoydence/talaria/api/v1"
+	talaria "github.com/poy/talaria/api/v1"
 )
 
 //go:generate hel

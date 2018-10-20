@@ -9,11 +9,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apoydence/loggrebutterfly/analyst/internal/network/intra"
-	api "github.com/apoydence/loggrebutterfly/api/intra"
-	"github.com/apoydence/onpar"
-	. "github.com/apoydence/onpar/expect"
-	. "github.com/apoydence/onpar/matchers"
+	"github.com/poy/loggrebutterfly/analyst/internal/network/intra"
+	api "github.com/poy/loggrebutterfly/api/intra"
+	"github.com/poy/onpar"
+	. "github.com/poy/onpar/expect"
+	. "github.com/poy/onpar/matchers"
 )
 
 //go:generate hel

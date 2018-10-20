@@ -9,10 +9,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apoydence/loggrebutterfly/analyst/internal/algorithms/reducers"
-	"github.com/apoydence/onpar"
-	. "github.com/apoydence/onpar/expect"
-	. "github.com/apoydence/onpar/matchers"
+	"github.com/poy/loggrebutterfly/analyst/internal/algorithms/reducers"
+	"github.com/poy/onpar"
+	. "github.com/poy/onpar/expect"
+	. "github.com/poy/onpar/matchers"
 )
 
 func TestMain(m *testing.M) {

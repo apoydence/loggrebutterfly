@@ -7,12 +7,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apoydence/loggrebutterfly/analyst/internal/algorithms"
-	v1 "github.com/apoydence/loggrebutterfly/api/v1"
-	"github.com/apoydence/mapreduce"
-	"github.com/apoydence/onpar"
-	. "github.com/apoydence/onpar/expect"
-	. "github.com/apoydence/onpar/matchers"
+	"github.com/poy/loggrebutterfly/analyst/internal/algorithms"
+	v1 "github.com/poy/loggrebutterfly/api/v1"
+	"github.com/poy/mapreduce"
+	"github.com/poy/onpar"
+	. "github.com/poy/onpar/expect"
+	. "github.com/poy/onpar/matchers"
 	"github.com/golang/protobuf/proto"
 )
 

@@ -16,14 +16,14 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 
-	v2 "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
-	pb "github.com/apoydence/loggrebutterfly/api/v1"
-	"github.com/apoydence/loggrebutterfly/client"
-	"github.com/apoydence/loggrebutterfly/internal/end2end"
-	"github.com/apoydence/onpar"
-	. "github.com/apoydence/onpar/expect"
-	. "github.com/apoydence/onpar/matchers"
-	"github.com/apoydence/petasos/router"
+	v2 "github.com/poy/loggrebutterfly/api/loggregator/v2"
+	pb "github.com/poy/loggrebutterfly/api/v1"
+	"github.com/poy/loggrebutterfly/client"
+	"github.com/poy/loggrebutterfly/internal/end2end"
+	"github.com/poy/onpar"
+	. "github.com/poy/onpar/expect"
+	. "github.com/poy/onpar/matchers"
+	"github.com/poy/petasos/router"
 	"github.com/onsi/gomega/gexec"
 )
 
@@ -210,7 +210,7 @@ func startMaster(routerPorts, extRouterPorts, nodePorts, nodeIntraPorts []int) (
 	log.Printf("Starting master on %d...", port)
 	defer log.Printf("Done starting master on %d.", port)
 
-	path, err := gexec.Build("github.com/apoydence/loggrebutterfly/master")
+	path, err := gexec.Build("github.com/poy/loggrebutterfly/master")
 	if err != nil {
 		panic(err)
 	}
@@ -246,7 +246,7 @@ func startTalariaScheduler(nodePorts []int) (port int, ps *os.Process) {
 		log.Printf("Node Port (%d) = %d", i, nodePort)
 	}
 
-	path, err := gexec.Build("github.com/apoydence/talaria/scheduler")
+	path, err := gexec.Build("github.com/poy/talaria/scheduler")
 	if err != nil {
 		panic(err)
 	}
@@ -281,7 +281,7 @@ func startDataNode() (port, intraPort, nodePort, intraNodePort int, ps []*os.Pro
 	log.Printf("Starting data node on %d (talaria=%d)...", port, nodePort)
 	defer log.Printf("Done starting data node on %d.", port)
 
-	path, err := gexec.Build("github.com/apoydence/loggrebutterfly/datanode")
+	path, err := gexec.Build("github.com/poy/loggrebutterfly/datanode")
 	if err != nil {
 		panic(err)
 	}
@@ -313,7 +313,7 @@ func startAnalyst(
 	talariaNodePorts []int,
 ) (port int, ps *os.Process) {
 	nodePort := end2end.AvailablePort()
-	path, err := gexec.Build("github.com/apoydence/loggrebutterfly/analyst")
+	path, err := gexec.Build("github.com/poy/loggrebutterfly/analyst")
 	if err != nil {
 		panic(err)
 	}
@@ -343,7 +343,7 @@ func startAnalyst(
 func startTalariaNode() (int, int, *os.Process) {
 	nodePort := end2end.AvailablePort()
 	intraNodePort := end2end.AvailablePort()
-	path, err := gexec.Build("github.com/apoydence/talaria/node")
+	path, err := gexec.Build("github.com/poy/talaria/node")
 	if err != nil {
 		panic(err)
 	}

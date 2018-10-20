@@ -1,7 +1,7 @@
 package network
 
 import (
-	"github.com/apoydence/loggrebutterfly/api/intra"
+	"github.com/poy/loggrebutterfly/api/intra"
 )
 
 //go:generate hel

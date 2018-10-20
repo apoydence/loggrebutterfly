@@ -4,7 +4,7 @@ import (
 	"io"
 	"log"
 
-	talaria "github.com/apoydence/talaria/api/v1"
+	talaria "github.com/poy/talaria/api/v1"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

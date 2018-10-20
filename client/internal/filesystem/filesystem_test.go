@@ -13,12 +13,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 
-	"github.com/apoydence/eachers/testhelpers"
-	pb "github.com/apoydence/loggrebutterfly/api/v1"
-	"github.com/apoydence/loggrebutterfly/client/internal/filesystem"
-	"github.com/apoydence/onpar"
-	. "github.com/apoydence/onpar/expect"
-	. "github.com/apoydence/onpar/matchers"
+	"github.com/poy/eachers/testhelpers"
+	pb "github.com/poy/loggrebutterfly/api/v1"
+	"github.com/poy/loggrebutterfly/client/internal/filesystem"
+	"github.com/poy/onpar"
+	. "github.com/poy/onpar/expect"
+	. "github.com/poy/onpar/matchers"
 )
 
 func TestMain(m *testing.M) {

@@ -1,9 +1,9 @@
 package rangemetrics
 
 import (
-	"github.com/apoydence/loggrebutterfly/master/internal/rangemetrics/networkreader"
-	"github.com/apoydence/petasos/metrics"
-	"github.com/apoydence/petasos/router"
+	"github.com/poy/loggrebutterfly/master/internal/rangemetrics/networkreader"
+	"github.com/poy/petasos/metrics"
+	"github.com/poy/petasos/router"
 )
 
 type RangeMetrics struct {

@@ -8,7 +8,7 @@ dir_resolve()
 
 set -e
 
-loggregator=github.com/apoydence/loggrebutterfly/api/loggregator/v2
+loggregator=github.com/poy/loggrebutterfly/api/loggregator/v2
 target=`dirname $0`
 target=`dir_resolve $target`
 cd $target

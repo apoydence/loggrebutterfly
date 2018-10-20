@@ -3,8 +3,8 @@ package algorithms
 import (
 	"fmt"
 
-	v1 "github.com/apoydence/loggrebutterfly/api/v1"
-	"github.com/apoydence/mapreduce"
+	v1 "github.com/poy/loggrebutterfly/api/v1"
+	"github.com/poy/mapreduce"
 	"github.com/golang/protobuf/proto"
 )
 

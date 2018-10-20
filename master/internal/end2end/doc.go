@@ -1,8 +1,8 @@
 package end2end
 
 import (
-	"github.com/apoydence/loggrebutterfly/api/intra"
-	pb "github.com/apoydence/talaria/api/v1"
+	"github.com/poy/loggrebutterfly/api/intra"
+	pb "github.com/poy/talaria/api/v1"
 )
 
 //go:generate hel

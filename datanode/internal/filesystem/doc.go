@@ -1,6 +1,6 @@
 package filesystem
 
-import pb "github.com/apoydence/talaria/api/v1"
+import pb "github.com/poy/talaria/api/v1"
 
 //go:generate hel
 //

@@ -4,11 +4,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/apoydence/loggrebutterfly/master/internal/config"
-	"github.com/apoydence/loggrebutterfly/master/internal/filesystem"
-	"github.com/apoydence/loggrebutterfly/master/internal/rangemetrics"
-	"github.com/apoydence/loggrebutterfly/master/internal/server"
-	"github.com/apoydence/petasos/maintainer"
+	"github.com/poy/loggrebutterfly/master/internal/config"
+	"github.com/poy/loggrebutterfly/master/internal/filesystem"
+	"github.com/poy/loggrebutterfly/master/internal/rangemetrics"
+	"github.com/poy/loggrebutterfly/master/internal/server"
+	"github.com/poy/petasos/maintainer"
 
 	_ "net/http/pprof"
 )

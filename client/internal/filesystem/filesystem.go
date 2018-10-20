@@ -8,9 +8,9 @@ import (
 
 	"google.golang.org/grpc"
 
-	pb "github.com/apoydence/loggrebutterfly/api/v1"
-	"github.com/apoydence/petasos/reader"
-	"github.com/apoydence/petasos/router"
+	pb "github.com/poy/loggrebutterfly/api/v1"
+	"github.com/poy/petasos/reader"
+	"github.com/poy/petasos/router"
 )
 
 type RouteCache interface {

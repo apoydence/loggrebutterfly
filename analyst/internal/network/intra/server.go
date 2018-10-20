@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/apoydence/loggrebutterfly/api/intra"
+	"github.com/poy/loggrebutterfly/api/intra"
 )
 
 type Executor interface {

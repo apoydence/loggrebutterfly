@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	pb "github.com/apoydence/talaria/api/v1"
+	pb "github.com/poy/talaria/api/v1"
 	"google.golang.org/grpc"
 )
 

@@ -7,11 +7,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apoydence/loggrebutterfly/analyst/internal/algorithms/mappers"
-	loggregator "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
-	"github.com/apoydence/onpar"
-	. "github.com/apoydence/onpar/expect"
-	. "github.com/apoydence/onpar/matchers"
+	"github.com/poy/loggrebutterfly/analyst/internal/algorithms/mappers"
+	loggregator "github.com/poy/loggrebutterfly/api/loggregator/v2"
+	"github.com/poy/onpar"
+	. "github.com/poy/onpar/expect"
+	. "github.com/poy/onpar/matchers"
 	"github.com/golang/protobuf/proto"
 )
 

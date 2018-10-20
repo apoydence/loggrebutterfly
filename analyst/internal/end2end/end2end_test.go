@@ -14,14 +14,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apoydence/eachers/testhelpers"
-	v2 "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
-	loggrebutterfly "github.com/apoydence/loggrebutterfly/api/v1"
-	"github.com/apoydence/loggrebutterfly/internal/end2end"
-	"github.com/apoydence/onpar"
-	. "github.com/apoydence/onpar/expect"
-	. "github.com/apoydence/onpar/matchers"
-	talaria "github.com/apoydence/talaria/api/v1"
+	"github.com/poy/eachers/testhelpers"
+	v2 "github.com/poy/loggrebutterfly/api/loggregator/v2"
+	loggrebutterfly "github.com/poy/loggrebutterfly/api/v1"
+	"github.com/poy/loggrebutterfly/internal/end2end"
+	"github.com/poy/onpar"
+	. "github.com/poy/onpar/expect"
+	. "github.com/poy/onpar/matchers"
+	talaria "github.com/poy/talaria/api/v1"
 	"github.com/golang/protobuf/proto"
 	"github.com/onsi/gomega/gexec"
 	"google.golang.org/grpc"
@@ -303,7 +303,7 @@ func startAnalyst(port, intraPort int, dataNodeAddr, schedAddr string) *os.Proce
 	log.Printf("Starting analyst on %d...", port)
 	defer log.Printf("Done starting analyst on %d.", port)
 
-	path, err := gexec.Build("github.com/apoydence/loggrebutterfly/analyst")
+	path, err := gexec.Build("github.com/poy/loggrebutterfly/analyst")
 	if err != nil {
 		panic(err)
 	}

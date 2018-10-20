@@ -1,6 +1,6 @@
 package filesystem
 
-import "github.com/apoydence/loggrebutterfly/api/v1"
+import "github.com/poy/loggrebutterfly/api/v1"
 
 //go:generate hel
 

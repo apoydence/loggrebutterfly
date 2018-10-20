@@ -3,11 +3,11 @@ package client
 import (
 	"io"
 
-	v2 "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
-	"github.com/apoydence/loggrebutterfly/client/internal/filesystem"
-	"github.com/apoydence/loggrebutterfly/client/internal/hasher"
-	"github.com/apoydence/petasos/reader"
-	"github.com/apoydence/petasos/router"
+	v2 "github.com/poy/loggrebutterfly/api/loggregator/v2"
+	"github.com/poy/loggrebutterfly/client/internal/filesystem"
+	"github.com/poy/loggrebutterfly/client/internal/hasher"
+	"github.com/poy/petasos/reader"
+	"github.com/poy/petasos/router"
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 )

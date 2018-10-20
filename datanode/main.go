@@ -4,12 +4,12 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/apoydence/loggrebutterfly/datanode/internal/config"
-	"github.com/apoydence/loggrebutterfly/datanode/internal/filesystem"
-	"github.com/apoydence/loggrebutterfly/datanode/internal/hasher"
-	"github.com/apoydence/loggrebutterfly/datanode/internal/server"
-	"github.com/apoydence/loggrebutterfly/datanode/internal/server/intra"
-	"github.com/apoydence/petasos/router"
+	"github.com/poy/loggrebutterfly/datanode/internal/config"
+	"github.com/poy/loggrebutterfly/datanode/internal/filesystem"
+	"github.com/poy/loggrebutterfly/datanode/internal/hasher"
+	"github.com/poy/loggrebutterfly/datanode/internal/server"
+	"github.com/poy/loggrebutterfly/datanode/internal/server/intra"
+	"github.com/poy/petasos/router"
 
 	_ "net/http/pprof"
 )

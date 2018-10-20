@@ -6,7 +6,7 @@
 package filesystem_test
 
 import (
-	pb "github.com/apoydence/talaria/api/v1"
+	pb "github.com/poy/talaria/api/v1"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 )

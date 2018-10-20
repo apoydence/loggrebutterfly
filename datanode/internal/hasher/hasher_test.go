@@ -7,13 +7,13 @@ import (
 	"os"
 	"testing"
 
-	v2 "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
+	v2 "github.com/poy/loggrebutterfly/api/loggregator/v2"
 	"github.com/golang/protobuf/proto"
 
-	"github.com/apoydence/loggrebutterfly/datanode/internal/hasher"
-	"github.com/apoydence/onpar"
-	. "github.com/apoydence/onpar/expect"
-	. "github.com/apoydence/onpar/matchers"
+	"github.com/poy/loggrebutterfly/datanode/internal/hasher"
+	"github.com/poy/onpar"
+	. "github.com/poy/onpar/expect"
+	. "github.com/poy/onpar/matchers"
 )
 
 func TestMain(m *testing.M) {

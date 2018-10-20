@@ -5,7 +5,7 @@
 
 package intra_test
 
-import "github.com/apoydence/petasos/router"
+import "github.com/poy/petasos/router"
 
 type mockMetricsReader struct {
 	MetricsCalled chan bool

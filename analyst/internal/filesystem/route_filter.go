@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/apoydence/petasos/router"
+	"github.com/poy/petasos/router"
 )
 
 type Hasher interface {

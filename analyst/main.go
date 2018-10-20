@@ -7,18 +7,18 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/apoydence/loggrebutterfly/analyst/internal/algorithms"
-	"github.com/apoydence/loggrebutterfly/analyst/internal/algorithms/mappers"
-	"github.com/apoydence/loggrebutterfly/analyst/internal/algorithms/reducers"
-	"github.com/apoydence/loggrebutterfly/analyst/internal/config"
-	"github.com/apoydence/loggrebutterfly/analyst/internal/filesystem"
-	"github.com/apoydence/loggrebutterfly/analyst/internal/network"
-	"github.com/apoydence/loggrebutterfly/analyst/internal/network/intra"
-	"github.com/apoydence/loggrebutterfly/analyst/internal/network/server"
-	apiintra "github.com/apoydence/loggrebutterfly/api/intra"
-	v1 "github.com/apoydence/loggrebutterfly/api/v1"
-	"github.com/apoydence/mapreduce"
-	"github.com/apoydence/talaria/api/v1"
+	"github.com/poy/loggrebutterfly/analyst/internal/algorithms"
+	"github.com/poy/loggrebutterfly/analyst/internal/algorithms/mappers"
+	"github.com/poy/loggrebutterfly/analyst/internal/algorithms/reducers"
+	"github.com/poy/loggrebutterfly/analyst/internal/config"
+	"github.com/poy/loggrebutterfly/analyst/internal/filesystem"
+	"github.com/poy/loggrebutterfly/analyst/internal/network"
+	"github.com/poy/loggrebutterfly/analyst/internal/network/intra"
+	"github.com/poy/loggrebutterfly/analyst/internal/network/server"
+	apiintra "github.com/poy/loggrebutterfly/api/intra"
+	v1 "github.com/poy/loggrebutterfly/api/v1"
+	"github.com/poy/mapreduce"
+	"github.com/poy/talaria/api/v1"
 )
 
 func main() {

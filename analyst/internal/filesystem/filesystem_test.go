@@ -14,11 +14,11 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/apoydence/loggrebutterfly/analyst/internal/filesystem"
-	"github.com/apoydence/onpar"
-	. "github.com/apoydence/onpar/expect"
-	. "github.com/apoydence/onpar/matchers"
-	talaria "github.com/apoydence/talaria/api/v1"
+	"github.com/poy/loggrebutterfly/analyst/internal/filesystem"
+	"github.com/poy/onpar"
+	. "github.com/poy/onpar/expect"
+	. "github.com/poy/onpar/matchers"
+	talaria "github.com/poy/talaria/api/v1"
 )
 
 func TestMain(m *testing.M) {

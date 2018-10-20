@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	loggregator "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
-	v1 "github.com/apoydence/loggrebutterfly/api/v1"
+	loggregator "github.com/poy/loggrebutterfly/api/loggregator/v2"
+	v1 "github.com/poy/loggrebutterfly/api/v1"
 )
 
 type Aggregation struct {

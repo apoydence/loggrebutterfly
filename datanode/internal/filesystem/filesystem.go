@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	v1 "github.com/apoydence/loggrebutterfly/api/v1"
-	"github.com/apoydence/petasos/router"
-	pb "github.com/apoydence/talaria/api/v1"
+	v1 "github.com/poy/loggrebutterfly/api/v1"
+	"github.com/poy/petasos/router"
+	pb "github.com/poy/talaria/api/v1"
 	"google.golang.org/grpc"
 )
 

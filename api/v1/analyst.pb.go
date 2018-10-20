@@ -37,7 +37,7 @@ package loggrebutterfly
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import loggregator_v2 "github.com/apoydence/loggrebutterfly/api/loggregator/v2"
+import loggregator_v2 "github.com/poy/loggrebutterfly/api/loggregator/v2"
 
 import (
 	context "golang.org/x/net/context"
